@@ -1,0 +1,138 @@
+<!--
+  Principal Frontend Engineer Notes:
+
+  This is the final, interactive HTML template. It has been wired up with HTMX
+  to communicate with the existing backend service.
+
+  Key Decisions & Rationale:
+  1.  HTMX Script: The core HTMX library is included in the <head> to enable
+      declarative AJAX.
+
+  2.  Form Data Aggregation (`hx-include`, `hx-vals`):
+      - `hx-include="#address_change_form, #customer-info"`: This is a powerful
+        HTMX feature. It tells the "Submit" button to gather input values from two
+        separate containers: the main form (`#address_change_form`) and the
+        customer info block (`#customer-info`). This is necessary because the
+        backend requires the `customer-id`, which is logically separate from the
+        address change form itself.
+      - Hidden Input for `customer-id`: To make the `customer-id` submittable,
+        a `<input type="hidden">` was added. This is a standard and robust pattern
+        for including non-user-editable data in a form submission.
+      - `hx-vals`: The backend expects a `service_type` parameter that isn't
+        present in the UI. `hx-vals` is the perfect tool to add this static,
+        client-side value to the request payload without cluttering the HTML with
+        more hidden inputs.
+
+  3.  Targeting & Swapping (`hx-target`, `hx-swap`):
+      - All three buttons target the same `#mail_status_display` div. This centralizes
+        all status updates into a single, predictable location for the user.
+      - `hx-swap="innerHTML"` is used to completely replace the content of the
+        target div with the HTML fragment returned by the server. This is the most
+        common and straightforward swap strategy.
+
+  4.  Cleanup: The static "State After Action" examples from the mockup have been
+      removed. They were useful for design but are redundant in the final interactive
+      application, which generates these states dynamically.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Form Submission, hx-vals, hx-include, and Error Handling</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- The HTMX library, deferred to prevent render-blocking -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+  </head>
+  <body class="bg-gray-900 text-gray-300 font-sans">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The Post Office</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: Form Submission, hx-vals, hx-include, and Error Handling</p>
+      </header>
+
+      <!-- The main layout area for lesson-specific content -->
+      <div class="space-y-8">
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Customer Profile</h2>
+          <!-- This section contains data we need to include in our POST request. -->
+          <div id="customer-info" data-testid="customer_id_display" class="bg-gray-900 p-4 rounded-md">
+            <p class="text-sm text-gray-400">Customer ID on File</p>
+            <p class="text-lg font-mono text-gray-100">CID-12345</p>
+            <!--
+              This hidden input is crucial. It allows HTMX's `hx-include` to find
+              and submit the 'customer-id' value, which the backend requires.
+              The alias="customer-id" in the FastAPI backend is what allows it
+              to correctly map this form field name.
+            -->
+            <input type="hidden" name="customer-id" value="CID-12345">
+          </div>
+        </div>
+        
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Post Office Counter</h2>
+          <!--
+            The onsubmit="return false;" is a good defensive practice to prevent
+            a full-page form submission if a user hits Enter in an input field.
+          -->
+          <form id="address_change_form" data-testid="address_change_form" onsubmit="return false;" class="space-y-4">
+            <div>
+              <label for="street" class="block text-sm font-medium text-gray-400 mb-1">New Street Address</label>
+              <input type="text" name="street" id="street" data-testid="street_address_input" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-gray-200 focus:ring-indigo-500 focus:border-indigo-500" placeholder="123 Main St">
+            </div>
+            <div>
+              <label for="zip_code" class="block text-sm font-medium text-gray-400 mb-1">New Zip Code</label>
+              <input type="text" name="zip_code" id="zip_code" data-testid="zip_code_input" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-gray-200 focus:ring-indigo-500 focus:border-indigo-500" placeholder="90210">
+            </div>
+          </form>
+          <div class="mt-6 flex flex-wrap gap-4">
+            <!-- Button for successful submission -->
+            <button
+              data-testid="submit_button"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors"
+              hx-post="/process-address-change"
+              hx-target="#mail_status_display"
+              hx-swap="innerHTML"
+              hx-include="#address_change_form, #customer-info"
+              hx-vals='{"service_type": "Express"}'
+            >
+              Submit Change of Address
+            </button>
+            <!-- Button to trigger a 404 Not Found error -->
+            <button
+              data-testid="error_button_404"
+              class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors"
+              hx-post="/process-invalid-zip"
+              hx-target="#mail_status_display"
+              hx-swap="innerHTML"
+            >
+              Send to Invalid Zip Code
+            </button>
+            <!-- Button to trigger a 500 Internal Server Error -->
+            <button
+              data-testid="error_button_500"
+              class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-colors"
+              hx-post="/simulate-server-failure"
+              hx-target="#mail_status_display"
+              hx-swap="innerHTML"
+            >
+              Break the Sorting Machine
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Status Board</h2>
+
+          <!--
+            This is the target container for all HTMX responses. It starts with
+            a default message and will be dynamically updated by the server.
+          -->
+          <div id="mail_status_display" data-testid="mail_status_display" class="mt-2 p-4 bg-gray-900 rounded-md min-h-[80px] flex items-center justify-center">
+            <p class="text-gray-500 italic">Awaiting transmission...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

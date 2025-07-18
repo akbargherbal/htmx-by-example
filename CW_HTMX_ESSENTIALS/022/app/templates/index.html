@@ -1,0 +1,167 @@
+<!--
+  Principal Frontend Engineer's Notes:
+
+  This is the final, interactive HTML template for our Community Garden application.
+  My primary goal here is to replace all static, hardcoded content from the mockup
+  with a dynamic, data-driven view powered by HTMX and Jinja2.
+
+  Key Decisions:
+  1.  Single Source of Truth: The initial state of the garden is no longer hardcoded.
+      It's rendered by a Jinja2 `for` loop that iterates over the `garden_plots`
+      variable provided by our FastAPI backend. This ensures the UI always reflects
+      the true state from the server.
+
+  2.  HTMX Attributes for CRUD:
+      - CREATE (POST): The "Plant Seed" form uses `hx-post` to create a new plant.
+        `hx-target` points to the container, and `hx-swap="beforeend"` appends the new
+        plot without reloading the page. I've also added `hx-on::after-request="this.reset()"`
+        for a better user experience, clearing the form after a successful submission.
+      - UPDATE (PUT): The "Replace" button uses `hx-put`. Crucially, `hx-target` is set
+        to the `id` of the plot's container div. The backend returns a new div with the
+        same `id`, and `hx-swap="outerHTML"` replaces the old plot with the new one seamlessly.
+      - DELETE (DELETE): The "Pull Weed" button uses `hx-delete`. The backend returns an
+        empty 200 OK response, which is the standard HTMX signal to remove the `hx-target`
+        element from the DOM. I've added `hx-confirm` as a simple, declarative way to
+        prevent accidental deletions.
+
+  3.  Timed Polling for Status:
+      - The "Garden Status Panel" demonstrates a timed trigger. The container div uses
+        `hx-get` to fetch the status and `hx-trigger="load, every 3s"` to perform the
+        request immediately on page load and then poll every 3 seconds thereafter. This
+        is a highly efficient way to keep a UI component in sync with the server state.
+
+  4.  Cleanup: All the "Initial State" vs. "State After Action" sections from the mockup
+      have been removed. The page is now a single, live, interactive interface.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRUD & Timed Triggers with HTMX</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- The HTMX library is the only JavaScript dependency needed. -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+  </head>
+  <body class="bg-gray-900 text-gray-300 font-sans">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The Community Garden</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: CRUD & Timed Triggers with HTMX</p>
+      </header>
+
+      <div class="space-y-8">
+        <!-- Garden Tools Panel Section -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Garden Tools Panel</h2>
+          <p class="text-gray-400 mb-4">Use this form to plant a new seed in an empty plot. This demonstrates a <code class="bg-gray-700 text-pink-400 px-1 rounded">POST</code> request.</p>
+          <!--
+            This form is wired to the POST /garden/plots endpoint.
+            - hx-post: Specifies the endpoint to send the POST request to.
+            - hx-target: The CSS selector for the element that will receive the response.
+            - hx-swap="beforeend": Appends the response HTML inside the target, at the end.
+            - hx-on::after-request: A hook to run JavaScript after the request. Here, it resets the form.
+          -->
+          <form
+            hx-post="/garden/plots"
+            hx-target="#garden-plots-container"
+            hx-swap="beforeend"
+            hx-on::after-request="this.reset()"
+            class="flex items-end space-x-4"
+          >
+            <div class="flex-grow">
+              <label for="plant-name" class="block mb-2 text-sm font-medium text-gray-400">Plant Name</label>
+              <!-- The `name` attribute is critical. Its value is sent as the form data. -->
+              <input type="text" id="plant-name" name="plant_name" data-testid="plant-name-input" class="bg-gray-700 border border-gray-600 text-gray-300 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="e.g., Basil" required />
+            </div>
+            <button type="submit" data-testid="plant-seed-button" class="bg-green-600 text-white font-bold py-2.5 px-5 rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap">Plant Seed</button>
+          </form>
+        </div>
+
+        <!-- Garden Plot Container Section -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Garden Plot Container</h2>
+          <!--
+            This container is the target for new plants. The initial state is rendered
+            by the Jinja2 loop below.
+          -->
+          <div id="garden-plots-container" data-testid="garden-plots-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!--
+              Jinja2 `for` loop to render the initial state from the backend.
+              `garden_plots` is a dictionary passed from the `read_root` function in main.py.
+              We iterate through its items to get both the plot_id and plant_name.
+            -->
+            {% for plot_id, plant_name in garden_plots.items() %}
+            <div id="plot-{{ plot_id }}" data-testid="plant-plot-{{ plant_name | lower | replace(' ', '-') }}" class="bg-gray-900 p-4 rounded-lg border border-gray-700 flex items-center justify-between">
+              <span class="text-xl">
+                {% if plant_name == 'Tomato' %}🍅{% elif plant_name == 'Weed' %}🌿{% else %}🌱{% endif %}
+                {{ plant_name }}
+              </span>
+              <div class="space-x-2">
+                {% if plant_name == 'Weed' %}
+                <!--
+                  DELETE request to remove the weed.
+                  - hx-delete: Specifies the endpoint for the DELETE request.
+                  - hx-target: The element to be removed upon a successful (empty 200) response.
+                  - hx-swap="outerHTML": The entire target element is removed.
+                  - hx-confirm: A simple way to show a confirmation dialog before sending the request.
+                -->
+                <button
+                  hx-delete="/garden/plots/{{ plot_id }}"
+                  hx-target="#plot-{{ plot_id }}"
+                  hx-swap="outerHTML"
+                  hx-confirm="Are you sure you want to pull this weed?"
+                  data-testid="pull-weed-button-{{ plot_id }}"
+                  class="text-xs bg-red-600 text-white font-bold py-1 px-3 rounded hover:bg-red-700 transition-colors"
+                >
+                  Pull Weed
+                </button>
+                {% else %}
+                <!--
+                  PUT request to replace the plant.
+                  - hx-put: Specifies the endpoint for the PUT request.
+                  - hx-target: The element to be replaced by the response HTML.
+                  - hx-swap="outerHTML": The entire target element is replaced by the response.
+                -->
+                <button
+                  hx-put="/garden/plots/{{ plot_id }}"
+                  hx-target="#plot-{{ plot_id }}"
+                  hx-swap="outerHTML"
+                  data-testid="replace-plant-button-{{ plot_id }}"
+                  class="text-xs bg-yellow-600 text-white font-bold py-1 px-3 rounded hover:bg-yellow-700 transition-colors"
+                >
+                  Replace
+                </button>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Garden Status Panel Section -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Garden Status Panel</h2>
+          <p class="text-gray-400 mb-4">This panel automatically updates on a timer, demonstrating a polled <code class="bg-gray-700 text-pink-400 px-1 rounded">GET</code> request.</p>
+          <!--
+            This div is responsible for polling the garden status.
+            - hx-get: The endpoint to fetch the status from.
+            - hx-trigger="load, every 3s": Triggers the request on page load, and then every 3 seconds.
+            - hx-swap="innerHTML": The content of this div will be replaced by the response.
+          -->
+          <div
+            data-testid="garden-status-container"
+            hx-get="/garden/status"
+            hx-trigger="load, every 3s"
+            hx-swap="innerHTML"
+          >
+            <!-- A simple loading indicator is good practice for polled content. -->
+            <div class="mt-2 bg-gray-900 p-4 rounded-lg border border-gray-700">
+              <p class="text-center text-gray-400">Loading garden status...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

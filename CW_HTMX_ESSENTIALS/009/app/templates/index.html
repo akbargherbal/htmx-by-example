@@ -1,0 +1,131 @@
+<!--
+  Principal Frontend Engineer Notes:
+  - This is the final, interactive HTML file, powered by Jinja2 and HTMX.
+  - All static "state after action" examples from the mockup have been removed. The UI is now fully dynamic.
+  - The initial state is rendered by the backend via Jinja2 variables (`initial_credit`, `item_grid_html`). This follows the rule that the backend is the source of truth.
+  - HTMX attributes (`hx-*`) are added to the interactive elements to wire them to the FastAPI backend.
+  - A global error handler (`hx-on::htmx:responseError`) is placed on the body. This is a clean, scalable pattern to handle all backend-generated errors (like the 404 for a sold-out item) and display them in a consistent location without cluttering every button with its own error handling logic.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Modern Vending Machine</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- HTMX script is included here. `defer` is used to ensure it executes after the DOM is parsed. -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+  </head>
+  <body
+    class="bg-gray-900 text-gray-300 font-sans"
+    <!-- 
+      Global Response Error Handler:
+      This is a powerful HTMX feature. It listens for the `htmx:responseError` event on the body element.
+      When any HTMX request results in an error status (e.g., 404, 500), this script will take the
+      HTML content from the server's error response (`event.detail.xhr.responseText`) and place it
+      into the `#display-screen-target`. This keeps our error handling logic centralized and clean.
+    -->
+    hx-on::htmx:responseError="htmx.find('#display-screen-target').innerHTML = event.detail.xhr.responseText"
+  >
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The Modern Vending Machine</h1>
+        <p class="text-lg text-gray-500 mt-2">A Complex, Multi-Target Vending Machine</p>
+      </header>
+      
+      <div class="space-y-8">
+        <!-- Display Screen Section -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Display Screen</h2>
+          <!-- 
+            This is the primary target for item info and error messages.
+            It has a unique ID `display-screen-target` so HTMX can easily find it.
+          -->
+          <div 
+            id="display-screen-target" 
+            class="mt-2 bg-gray-900 border border-gray-600 rounded-md p-4 h-24 flex items-center justify-center text-center" 
+            data-testid="display_screen_target"
+          >
+            <p class="text-gray-500">Welcome! Select an item for info.</p>
+          </div>
+        </div>
+
+        <!-- Control Panel Section -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg" data-testid="control_panel">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Control Panel</h2>
+          <div class="flex items-center justify-between space-x-4">
+            <div class="flex-1">
+              <label class="block text-sm font-medium text-gray-400">Current Credit</label>
+              <!-- 
+                Credit Display: This div has an ID so it can be updated via an Out-Of-Band (OOB) swap.
+                The initial value is rendered by the server using the Jinja2 variable.
+              -->
+              <div 
+                id="credit-display" 
+                class="bg-gray-900 p-3 rounded-md text-2xl font-mono text-green-400 text-center" 
+                data-testid="credit_display"
+              >
+                ${{ initial_credit }}
+              </div>
+            </div>
+            <!-- 
+              Add Credit Button:
+              - hx-post: Sends a POST request to the /add-credit endpoint.
+              - hx-target: Specifies that the main response content should replace the #item-grid-container.
+              - hx-swap: Uses `outerHTML` to replace the entire grid container, not just its contents.
+              - The backend also sends an OOB swap for #credit-display in the same response.
+            -->
+            <button 
+              class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors h-full mt-6" 
+              data-testid="add_credit_button"
+              hx-post="/add-credit"
+              hx-target="#item-grid-container"
+              hx-swap="outerHTML"
+            >
+              Insert $0.25
+            </button>
+          </div>
+        </div>
+
+        <!-- Item Grid Section -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Item Grid</h2>
+          <!-- 
+            Item Grid Container:
+            The backend's `read_root` function generates the entire initial HTML for the item grid.
+            We inject it here using the `safe` filter to prevent Jinja2 from auto-escaping the HTML.
+            This container is also the target for updates when credit is added.
+          -->
+          {{ item_grid_html | safe }}
+        </div>
+
+        <!-- Retrieval Bin Section -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Retrieval Bin</h2>
+          <!-- 
+            Retrieval Bin Target:
+            This div acts as a container for purchased items. The `id` allows the backend to send
+            OOB swaps with `hx-swap-oob="beforeend"` to append new items without affecting any other
+            part of the page.
+          -->
+          <div 
+            id="retrieval-bin-target" 
+            class="mt-2 bg-black border border-gray-600 p-6 rounded-b-lg min-h-32 flex flex-col items-center justify-start space-y-2" 
+            data-testid="retrieval_bin_target"
+          >
+            <!-- Initially empty, items will be appended here by HTMX OOB swaps -->
+            {% if not retrieved_items %}
+            <p class="text-gray-500 self-center h-full flex-grow flex items-center">(Empty)</p>
+            {% endif %}
+            <!-- Note: The backend doesn't re-render this on initial load, but this shows how it could -->
+            {% for item_name in retrieved_items %}
+            <div class="bg-yellow-500 p-4 rounded-lg shadow-inner text-yellow-900 font-bold animate-pulse">
+              {{ item_name }}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

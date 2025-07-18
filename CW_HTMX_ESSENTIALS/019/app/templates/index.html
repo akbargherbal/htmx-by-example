@@ -1,0 +1,145 @@
+<!--
+  Principal Engineer's Notes:
+  This is the final, interactive HTML template for the Jukebox application.
+  It has been wired to work with the existing backend defined in `app/main.py`.
+
+  Key Decisions:
+  1. Dynamic Initial State: All initial content (the song list, the jukebox enabled/disabled state) is rendered
+     dynamically using Jinja2 variables (`songs`, `jukebox_state`). This follows the rule that the backend is the
+     source of truth for application state. The static mockup's hardcoded lists have been replaced.
+
+  2. HTMX Integration:
+     - The HTMX script is included in the <head>.
+     - `hx-*` attributes are added to the interactive elements to communicate with the backend API.
+
+  3. Targeted Updates:
+     - "Insert Coin": This button sends a POST to `/enable-jukebox`. The `hx-target` is `#song-grid` and `hx-swap` is
+       `outerHTML`. This is a precise instruction to replace the entire initial (disabled) song grid with the
+       new (enabled) grid fragment returned by the server.
+     - "Preview": These buttons send a GET to `/songs/preview`. The `hx-target` is `#main-display`, swapping its
+       content with the song details. This works for both the initial disabled buttons and the ones loaded after
+       inserting a coin.
+     - "Select": These buttons (which only appear after a coin is inserted) are part of the fragment from `/enable-jukebox`.
+       The backend itself defines their behavior: POST to `/songs/queue`, target `#song-queue-list`, and use `beforeend`
+       to append the new song as an `<li>`.
+
+  4. Cleanup: The original mockup's "State After Action" examples and descriptive subheadings have been removed to
+     create a clean, functional user interface, as these states are now handled live by HTMX.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulating a Jukebox with htmx</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- The core HTMX library, deferred to prevent render-blocking. -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+  </head>
+  <body class="bg-gray-900 text-gray-300 font-sans">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The Classic Jukebox</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: Simulating a Jukebox with htmx</p>
+      </header>
+
+      <div class="space-y-8">
+        <!-- Jukebox Controls Section -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Jukebox Controls</h2>
+          <div class="mt-4">
+            <!--
+              The initial state of the coin button is determined by the `jukebox_state`
+              variable passed from the backend.
+            -->
+            {% if jukebox_state.enabled %}
+              <button data-testid="insert-coin-button-disabled" class="bg-gray-600 text-gray-400 font-bold py-2 px-6 rounded-lg cursor-not-allowed" disabled>
+                Coin Inserted
+              </button>
+            {% else %}
+              <button data-testid="insert-coin-button-initial"
+                      hx-post="/enable-jukebox"
+                      hx-target="#song-grid"
+                      hx-swap="outerHTML"
+                      class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition-colors">
+                Insert Coin
+              </button>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Song Selection Grid Section -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Song Selection Grid</h2>
+          <!--
+            This div is the target for the "Insert Coin" button. Its entire content will be replaced
+            by the HTML fragment from the `/enable-jukebox` endpoint.
+          -->
+          <div id="song-grid">
+            <div data-testid="song-selectors-disabled" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+              <!--
+                The initial song list is rendered in a loop using the `songs` dictionary
+                from the backend context. This ensures the frontend is always in sync with the data.
+              -->
+              {% for song_id, song_details in songs.items() %}
+              <div class="bg-gray-700 p-4 rounded-lg flex flex-col justify-between">
+                <p class="font-bold text-lg text-gray-100">{{ song_id }} - {{ song_details.name }}</p>
+                <div class="flex items-center space-x-2 mt-4">
+                  <button data-testid="song-{{ song_id }}-preview"
+                          hx-get="/songs/preview?songId={{ song_id }}"
+                          hx-target="#main-display"
+                          hx-swap="innerHTML"
+                          class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors">
+                    Preview
+                  </button>
+                  <button data-testid="song-{{ song_id }}-select-disabled" class="flex-1 bg-gray-500 text-gray-300 font-bold py-2 px-4 rounded cursor-not-allowed" disabled>
+                    Select
+                  </button>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Display Section -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Main Display</h2>
+          <!--
+            This div is the target for the "Preview" buttons. Its content will be replaced
+            by the song details fragment from the `/songs/preview` endpoint.
+          -->
+          <div id="main-display" data-testid="main-display" class="bg-black/50 p-4 rounded-lg border border-gray-600 min-h-[80px] flex items-center justify-center">
+            <div data-testid="main-display-initial" class="text-center text-gray-500">--- PREVIEW ---</div>
+          </div>
+        </div>
+
+        <!-- Up Next Queue Section -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Up Next Queue</h2>
+          <div class="bg-black/50 p-4 rounded-lg border border-gray-600 min-h-[80px]">
+            <!--
+              This ordered list is the target for the "Select" buttons. The backend's response for
+              `/enable-jukebox` configures the select buttons to append new `<li>` items here.
+              The `data-testid` is on the list itself for easy access in tests.
+            -->
+            <ol id="song-queue-list" data-testid="queue-list" class="list-decimal list-inside text-lg space-y-2 text-amber-400">
+              {% if not jukebox_state.queue %}
+                <!--
+                  This message is shown initially. The current backend implementation does not remove
+                  this message when the first item is added, which is a known limitation we will test for.
+                -->
+                <p data-testid="queue-list-initial" class="text-gray-500 italic">Queue is empty.</p>
+              {% else %}
+                <!-- This block would render any pre-existing items in the queue on page load. -->
+                {% for song_id in jukebox_state.queue %}
+                  <li data-testid="queue-item-{{ song_id }}">{{ song_id }} - {{ songs[song_id].name }}</li>
+                {% endfor %}
+              {% endif %}
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

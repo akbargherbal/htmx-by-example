@@ -1,0 +1,171 @@
+<!--
+  Principal Frontend Engineer Notes:
+
+  This file is the final, interactive HTML template. It has been wired to the backend API
+  using HTMX attributes. Key decisions include:
+
+  1.  **HTMX Script:** The HTMX library is included in the <head> to power all dynamic interactions.
+  2.  **Initial State:** The hardcoded initial temperature is replaced with the `{{ initial_temperature }}`
+      Jinja2 variable. This value is provided directly by the `GET /` endpoint in `app/main.py`,
+      ensuring the frontend is always in sync with the backend's initial state.
+  3.  **HX-Trigger Handling:** The `VENT_NOW` event, sent as a header from the backend, is handled
+      declaratively. The `<body>` tag listens for this event (`hx-on::vent-now`) and adds a CSS class
+      ('emergency-active'). A `<style>` block then uses this class to toggle the visibility of the
+      nominal and emergency alert panels. This is a clean, script-free way to handle server-sent events.
+  4.  **Error Handling:** The "Risky Experiment" button uses `hx-post` but targets the error log div.
+      Because the backend returns a 422 error, HTMX would normally not swap the content. We explicitly
+      handle this by listening for the `htmx:responseError` event (`hx-on:htmx:responseError`) and manually
+      injecting the error HTML from the response into the correct target. This is a robust pattern for
+      separating success and error display logic.
+  5.  **Polling:** The temperature display is wrapped in a `div` with `hx-get` and `hx-trigger="every 5s"`,
+      efficiently creating a live-updating component with minimal code.
+  6.  **Indicators:** A global loading indicator (`bubbling_indicator`) is controlled via the `.htmx-request`
+      class, which HTMX automatically adds to elements during a request. The CSS in the `<style>` block
+      makes the indicator visible whenever any HTMX request is in flight, providing clear user feedback.
+  7.  **Cleanup:** All static "State After Action" examples from the mockup have been removed, leaving a
+      clean initial state that will be dynamically updated by HTMX.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advanced Asynchronous Chemistry with HTMX</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+    <style>
+      /* Hide the emergency alert and bubbling indicator by default */
+      .emergency-state, .bubbling-indicator {
+        display: none;
+      }
+      /* When the body has the 'emergency-active' class, hide the nominal state and show the emergency one */
+      body.emergency-active .nominal-state {
+        display: none;
+      }
+      body.emergency-active .emergency-state {
+        display: flex; /* Use flex to match the original mockup's layout */
+      }
+      /* When any element has the .htmx-request class, show the bubbling indicator */
+      .htmx-request .bubbling-indicator {
+        display: flex;
+      }
+      /* A simple utility to hide the beaker's "Idle" text when a request is active */
+      .htmx-request .idle-text {
+        display: none;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-gray-300 font-sans" hx-on::vent-now="this.classList.add('emergency-active')">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The Chemistry Lab</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: Advanced Asynchronous Chemistry with HTMX</p>
+      </header>
+
+      <div class="space-y-8">
+        <!-- Lab Alert System -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-yellow-400">Lab Alert System</h2>
+          <p class="text-gray-400 mb-4">This panel shows lab-wide alerts, triggered by a server event (HX-Trigger header).</p>
+          
+          <!-- This container holds the two possible states for the alert system. CSS toggles their visibility. -->
+          <div data-testid="lab_alert_system">
+            <!-- Initial State: Visible by default -->
+            <div class="nominal-state mt-2 p-4 rounded-lg bg-gray-900/50 flex items-center space-x-3">
+              <div class="w-4 h-4 rounded-full bg-green-500"></div>
+              <span class="text-green-400 font-medium">All Systems Nominal</span>
+            </div>
+
+            <!-- State After Action: Hidden by default, shown when body gets 'emergency-active' class -->
+            <div data-testid="emergency_vent_light" class="emergency-state mt-2 p-4 rounded-lg bg-red-900/50 border border-red-500 flex items-center space-x-3">
+              <div class="w-4 h-4 rounded-full bg-red-500 animate-pulse"></div>
+              <span class="text-red-400 font-bold">EMERGENCY: VENT NOW!</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Control Panel</h2>
+          <p class="text-gray-400 mb-4">Initiate experiments from here. Different actions demonstrate different HTMX concepts.</p>
+          
+          <div class="space-y-6">
+            <!-- Mix Chemicals Form -->
+            <div>
+              <h3 class="font-semibold text-gray-400 border-t border-gray-600 pt-4 mt-4">Experiment 1: Mix Chemicals (Demonstrates `hx-post`)</h3>
+              <form data-testid="mix_chemicals_form"
+                    hx-post="/mix"
+                    hx-target="[data-testid='reaction_result']"
+                    hx-swap="innerHTML"
+                    class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                <div>
+                  <label for="chemical_a" class="block text-sm font-medium text-gray-400">Chemical A</label>
+                  <select id="chemical_a" name="chemical_a" class="mt-1 block w-full p-2 bg-gray-700 border border-gray-600 text-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                    <option>Alkaline Solution</option>
+                    <option>Acidic Reagent</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="chemical_b" class="block text-sm font-medium text-gray-400">Chemical B</label>
+                  <select id="chemical_b" name="chemical_b" class="mt-1 block w-full p-2 bg-gray-700 border border-gray-600 text-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                    <option>Inert Base</option>
+                    <option>Volatile Catalyst</option>
+                  </select>
+                </div>
+                <button type="submit" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Mix Chemicals</button>
+              </form>
+            </div>
+
+            <!-- Risky Experiment Button -->
+            <div>
+              <h3 class="font-semibold text-gray-400 border-t border-gray-600 pt-4 mt-4">Experiment 2: Risky Mix (Demonstrates `htmx:responseError`)</h3>
+               <p class="text-sm text-gray-500 mb-2">This experiment is designed to always fail, triggering an error response.</p>
+              <button data-testid="risky_experiment_button"
+                      hx-post="/risky-mix"
+                      hx-on:htmx:response-error="htmx.find('[data-testid=\'error_log\']').innerHTML = event.detail.xhr.responseText"
+                      class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Start Risky Experiment</button>
+            </div>
+
+            <!-- Temperature Monitor -->
+            <div hx-get="/temperature" hx-trigger="every 5s" hx-swap="innerHTML" hx-target="[data-testid='temperature_display']">
+              <h3 class="font-semibold text-gray-400 border-t border-gray-600 pt-4 mt-4">Monitor: Temperature (Demonstrates Polling)</h3>
+              <p class="text-sm text-gray-500 mb-2">This display automatically updates every few seconds.</p>
+              <div class="p-4 rounded-lg bg-gray-900/50">
+                <p class="text-lg mt-1">Current Temperature: <span data-testid="temperature_display" class="font-mono text-cyan-400">{{ initial_temperature }}°C</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Beaker Area -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-cyan-400">Main Beaker Area</h2>
+          <p class="text-gray-400 mb-4">Visual representation of the ongoing experiment. An indicator appears during the request.</p>
+          
+          <div class="mt-2 h-48 flex items-center justify-center bg-gray-900/50 rounded-lg relative overflow-hidden">
+            <!-- Beaker SVG -->
+            <svg class="h-24 w-24 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2zM18 6l-4 4-4-4M10 2v4h4V2" /></svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+               <p class="idle-text text-gray-500">Idle</p>
+            </div>
+            <!-- Bubbling Indicator -->
+            <div data-testid="bubbling_indicator" class="bubbling-indicator absolute inset-0 flex items-center justify-center bg-blue-900/30">
+               <span class="font-semibold text-blue-300 animate-pulse">BUBBLING...</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Status Log -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-green-400">Status Log</h2>
+          <p class="text-gray-400 mb-4">Displays results from successful experiments and errors from failed ones.</p>
+          
+          <div class="bg-gray-900 p-4 rounded-lg font-mono text-sm space-y-2">
+            <div data-testid="reaction_result"><p class="text-gray-500 italic">[SUCCESS LOG] Awaiting experiment results...</p></div>
+            <div data-testid="error_log" class="mt-1"><p class="text-gray-500 italic">[ERROR LOG] No errors reported.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,142 @@
+<!--
+  Principal Frontend Engineer Notes:
+  This is the final, interactive HTML file for the ATM interface. It has been wired up with HTMX
+  to communicate with the existing backend service (`app/main.py`).
+
+  Key HTMX Implementation Details:
+  1. HTMX Script: The core HTMX library is included in the <head>.
+  2. Central Target: The `#atm-screen` div is the single target for all UI updates. This simplifies the logic,
+     as all user actions result in a new state being displayed in one consistent location.
+  3. Form Submissions: The PIN and Withdrawal forms use `hx-post` to submit their data. The server's
+     HTML fragment response is then swapped into the `#atm-screen`.
+  4. Button Actions: The "Check Balance" button uses `hx-get` to fetch the balance information.
+  5. State Simulation: The "Insert Card" and "End Session" buttons are wired to special backend endpoints
+     (`hx-post`) that modify the server's session state. They don't need to update the UI directly, so they
+     have no `hx-target` attribute, making them "fire-and-forget" requests.
+  6. Initial State: The initial content of the `#atm-screen` is hardcoded here. This is acceptable because
+     the backend's `GET /` endpoint renders this template, and the default "logged out" state is always
+     this message. The `get_home_screen` endpoint also returns this exact message, ensuring consistency
+     after a session-ending redirect.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Secure ATM Transactions with HTMX</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- The HTMX library is essential for all dynamic interactions. -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+  </head>
+  <body class="bg-gray-900 text-gray-300 font-sans">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The Bank ATM</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: Secure ATM Transactions with HTMX</p>
+      </header>
+
+      <!-- The main layout area for lesson-specific content -->
+      <div class="space-y-8">
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">ATM Screen</h2>
+          <p class="text-sm text-gray-500 mb-4">
+            This is the main display where all content, prompts, and results are shown. It is the primary target for HTMX swaps.
+          </p>
+
+          <!--
+            This is the single, central target for all HTMX swaps.
+            Its initial state matches the "logged out" message from the backend.
+            The `data-testid` is simplified to "atm-screen" for consistent testing.
+          -->
+          <div data-testid="atm-screen" id="atm-screen" class="mt-4 bg-gray-900 border-2 border-gray-600 rounded-lg p-8 min-h-[150px] flex items-center justify-center text-center">
+            <p class="text-xl text-gray-400">Please insert your card and enter your PIN using the panels below.</p>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Control Panel</h2>
+          <p class="text-sm text-gray-500 mb-4">
+            A static area containing the forms and buttons for user interaction.
+          </p>
+          <div class="border-t border-gray-600 pt-4 mt-4 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!--
+              PIN Form:
+              - hx-post: Submits form data to the /login endpoint.
+              - hx-target: Specifies that the response should replace the content of #atm-screen.
+            -->
+            <form data-testid="pin-form" id="pin-form" class="space-y-3"
+                  hx-post="/login"
+                  hx-target="#atm-screen">
+              <label for="pin-input" class="block text-sm font-medium text-gray-300">1. Authenticate</label>
+              <input type="password" name="pin" id="pin-input" data-testid="pin-input" placeholder="Enter PIN" class="block w-full bg-gray-700 border border-gray-600 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500" />
+              <button type="submit" data-testid="pin-submit-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition duration-200">
+                Enter PIN
+              </button>
+            </form>
+
+            <!--
+              Withdrawal Form:
+              - hx-post: Submits form data to the /withdraw endpoint.
+              - hx-target: Also targets the #atm-screen for UI updates.
+            -->
+            <form data-testid="withdrawal-form" id="withdrawal-form" class="space-y-3"
+                  hx-post="/withdraw"
+                  hx-target="#atm-screen">
+              <label for="withdrawal-amount" class="block text-sm font-medium text-gray-300">2. Withdraw Funds</label>
+              <input type="number" name="amount" id="withdrawal-amount" data-testid="withdrawal-amount-input" placeholder="Enter amount" class="block w-full bg-gray-700 border border-gray-600 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500" />
+              <button type="submit" data-testid="withdraw-button" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-200">
+                Withdraw
+              </button>
+            </form>
+          </div>
+          <div class="border-t border-gray-600 pt-4 mt-6">
+             <h4 class="block text-sm font-medium text-gray-300 mb-3">Other Actions</h4>
+             <!--
+               Check Balance Button:
+               - hx-get: Performs a GET request to the /balance endpoint.
+               - hx-target: Updates #atm-screen. This will either show the balance or, if the server
+                 responds with an HX-Redirect header, HTMX will automatically handle the redirect.
+             -->
+             <button data-testid="check-balance-button"
+                     class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-200"
+                     hx-get="/balance"
+                     hx-target="#atm-screen">
+               Check Balance
+             </button>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Session Control (For Demo)</h2>
+          <p class="text-sm text-gray-500 mb-4">
+            These buttons simulate the global state of the user's session to demonstrate different server responses, like redirects or errors.
+          </p>
+           <div class="border-t border-gray-600 pt-4 mt-4">
+               <div class="flex flex-wrap gap-4">
+                   <!--
+                     Insert Card Button:
+                     - hx-post: Calls the simulation endpoint to set `card_inserted = True` on the server.
+                     - No hx-target is needed as this is a fire-and-forget action to change server state.
+                   -->
+                   <button data-testid="insert-card-button"
+                           class="flex-grow sm:flex-grow-0 bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md transition duration-200"
+                           hx-post="/simulation/insert-card">
+                     Simulate: Insert Card
+                   </button>
+                   <!--
+                     End Session Button:
+                     - hx-post: Calls the simulation endpoint to reset the session state on the server.
+                     - This is also a fire-and-forget action.
+                   -->
+                   <button data-testid="end-session-button"
+                           class="flex-grow sm:flex-grow-0 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition duration-200"
+                           hx-post="/simulation/remove-card">
+                     Simulate: End Session
+                   </button>
+               </div>
+           </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

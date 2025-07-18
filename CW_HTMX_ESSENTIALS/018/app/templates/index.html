@@ -1,0 +1,120 @@
+<!--
+  Principal Frontend Engineer's Notes:
+  - This file is the final, interactive version of the static mockup.
+  - It's a Jinja2 template, not static HTML.
+  - The initial state of the inbox is now dynamically rendered using the `initial_inbox_content` variable passed from the FastAPI backend. This ensures the UI always reflects the true application state on page load.
+  - HTMX attributes (`hx-*`) have been added to the buttons to wire them to the backend API endpoints.
+  - A global event handler `hx-on::htmx:response-error` is added to the body tag. This is a robust pattern for handling unexpected server errors (like 500s) out-of-band. It intercepts failed requests from anywhere on the page and displays a generic alert in a dedicated banner, preventing the UI from breaking.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Handling Errors and Redirects</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- The HTMX library is included here. `defer` ensures it runs after the DOM is parsed. -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+  </head>
+  <!--
+    The `hx-on::htmx:response-error` attribute is a powerful HTMX feature for global error handling.
+    It listens for the `htmx:responseError` event, which fires for any non-2xx response that isn't
+    explicitly handled by `hx-swap`. When a 500 error occurs, this JavaScript snippet finds the
+    `#error-banner-content` div and injects a user-friendly error message.
+    Note the use of single and escaped single quotes to embed HTML within the attribute.
+  -->
+  <body
+    class="bg-gray-900 text-gray-300 font-sans"
+    hx-on::htmx:response-error="htmx.find('#error-banner-content').innerHTML = `<div data-testid='error-banner-500-state' class='p-4 bg-red-900/70 border border-red-700 rounded-md text-red-200'><p><span class='font-bold'>System Alert:</span> A communication error occurred. Please try again later.</p></div>`"
+  >
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The Office Mailroom</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: Handling Errors and Redirects</p>
+      </header>
+
+      <div class="space-y-8">
+        <!-- Request Panel Section -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Request Panel</h2>
+          <p class="text-gray-400 mb-6">Send an inter-office mail request by clicking a button below.</p>
+          <div class="flex flex-wrap gap-4">
+            <!--
+              This button triggers a GET to an endpoint that returns a 404.
+              HTMX will swap the returned HTML fragment into the `#inbox-target`.
+            -->
+            <button
+              data-testid="request-404-btn"
+              hx-get="/request-file/missing"
+              hx-target="#inbox-target"
+              hx-swap="innerHTML"
+              class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              Request Missing File (404)
+            </button>
+            <!--
+              This button triggers a GET to an endpoint that returns a 500.
+              This will trigger the `htmx:responseError` event handled on the <body> tag.
+              The `#inbox-target` will NOT be updated.
+            -->
+            <button
+              data-testid="request-500-btn"
+              hx-get="/request/crashed-server"
+              hx-target="#inbox-target"
+              hx-swap="innerHTML"
+              class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              Request from Closed Dept (500)
+            </button>
+            <!--
+              This button triggers a GET to an endpoint that returns an `HX-Redirect` header.
+              HTMX will automatically follow the redirect and swap the content from the NEW URL
+              into the `#inbox-target`.
+            -->
+            <button
+              data-testid="request-redirect-btn"
+              hx-get="/mail/old-department"
+              hx-target="#inbox-target"
+              hx-swap="innerHTML"
+              class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              Send to Old Address (Redirect)
+            </button>
+          </div>
+        </div>
+
+        <!--
+          Inbox Section: This is the primary target for most HTMX swaps.
+          The static examples have been removed. The initial content is now
+          rendered by the Jinja2 template engine.
+        -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Inbox</h2>
+          <div id="inbox-target" class="mt-4">
+            <!--
+              The `initial_inbox_content` variable is passed from the backend.
+              The `| safe` filter is crucial to prevent Jinja2 from auto-escaping the HTML.
+            -->
+            {{ initial_inbox_content | safe }}
+          </div>
+        </div>
+
+        <!--
+          Error Alert Banner Section: This area is for out-of-band error messages.
+          It remains empty unless a 5xx error is caught by the global handler.
+        -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Error Alert Banner</h2>
+          <p class="text-gray-400 mb-4">This area displays out-of-band communication errors captured by 'htmx:responseError'.</p>
+          <!--
+            This div is the specific target for our global error handler.
+            It starts empty and is only populated when a 5xx error occurs.
+          -->
+          <div id="error-banner-content" data-testid="error-banner-content" class="mt-4 min-h-[52px]">
+            <!-- Banner content will be injected here by the hx-on handler -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

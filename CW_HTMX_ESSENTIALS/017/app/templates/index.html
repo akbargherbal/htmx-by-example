@@ -1,0 +1,127 @@
+<!--
+  Principal Frontend Engineer Notes:
+  This file is the final, interactive HTML page. It's a Jinja2 template that gets its initial state from the FastAPI backend.
+
+  Key HTMX Implementation Points:
+  1.  **HTMX Script**: The HTMX library is included in the <head>.
+  2.  **Initial State (Sidebar)**: The sidebar's initial content is rendered dynamically using a Jinja2 `for` loop. This is crucial for ensuring the UI starts in a state consistent with the backend. The `| safe` filter is used because the backend provides pre-rendered HTML `<li>` tags.
+  3.  **Polling (News Ticker)**: The `#news-ticker-content` div uses `hx-trigger="load delay:2s, every 2s"` to automatically fetch new headlines. It starts after a 2-second delay and then repeats every 2 seconds. This is a pure, declarative way to implement polling.
+  4.  **Event-Driven Update (Breaking News)**:
+      - The "SEND BREAKING NEWS ALERT" button (`hx-post`) sends a request that returns an `HX-Trigger` header.
+      - The `#main-screen-content` div listens for this event with `hx-trigger="newBreakingNews from:body"` and makes its own GET request to fetch the story. This decouples the trigger action from the content update.
+  5.  **Out-of-Band (OOB) Swap**:
+      - The "Send Coordinated Update" button posts to an endpoint that returns a response with two parts.
+      - The main part updates the target (`#main-screen-content`).
+      - A second part, marked with `hx-swap-oob="true"`, updates the `#alerts-sidebar-list` independently. This is a powerful pattern for updating multiple, unrelated parts of the page with a single request.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Polling, Server-Sent Events & Out-of-Band Swaps</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- The HTMX script is essential for all dynamic functionality. -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+  </head>
+  <body class="bg-gray-900 text-gray-300 font-sans">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The Live News Broadcast Center</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: Polling, Server-Sent Events & Out-of-Band Swaps</p>
+      </header>
+
+      <!-- The main layout area for lesson-specific content -->
+      <div class="space-y-8">
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Main Screen</h2>
+          
+          <!-- 
+            This div is a target for multiple actions.
+            1. It listens for the `newBreakingNews` event triggered by the alert button.
+            2. It's the primary target for the "Coordinated Update" button.
+          -->
+          <div id="main-screen-content" 
+               data-testid="main-screen-content" 
+               class="p-4 bg-gray-900 rounded-md mt-2"
+               hx-get="/api/story/breaking"
+               hx-trigger="newBreakingNews from:body"
+               hx-swap="innerHTML">
+            <h3 class="text-xl font-bold text-yellow-400">Live Coverage</h3>
+            <p class="mt-2 text-gray-500">Awaiting broadcast... Stand by for the latest updates.</p>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+            <h2 class="text-2xl font-semibold mb-4 text-indigo-400">News Ticker</h2>
+            
+            <!--
+              This div implements polling.
+              - `hx-get`: The endpoint to fetch content from.
+              - `hx-trigger`: Defines when to make the request. `load delay:2s` fetches the first update 2s after the page loads. `every 2s` continues fetching every 2 seconds thereafter.
+              - `hx-swap`: Specifies that the response content should replace the inner HTML of this div.
+            -->
+            <div id="news-ticker-content" 
+                 data-testid="news-ticker-content" 
+                 class="overflow-hidden bg-gray-900 p-3 rounded-md mt-2"
+                 hx-get="/api/headlines"
+                 hx-trigger="load delay:2s, every 2s"
+                 hx-swap="innerHTML">
+                <p class="text-sm">Weather: Sunny skies expected all week in the metropolitan area...</p>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+            <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Latest Alerts Sidebar</h2>
+            
+            <div class="mt-2 p-2 bg-gray-900 rounded">
+                <!--
+                  This list is populated by the backend on initial page load.
+                  It is also the target of an Out-of-Band swap from the "Coordinated Update" button.
+                  The `id` is critical for the OOB swap to find its target.
+                -->
+                <ul id="alerts-sidebar-list" data-testid="alerts-sidebar-list" class="list-disc list-inside space-y-2 text-sm">
+                    <!-- 
+                      The `sidebar_alerts` variable is passed from the `read_root` function in `main.py`.
+                      We loop through the list of pre-formatted HTML strings and render them.
+                      The `| safe` filter is necessary to prevent Jinja2 from auto-escaping the HTML.
+                    -->
+                    {% for alert in sidebar_alerts %}
+                      {{ alert | safe }}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+            <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Broadcast Control Panel</h2>
+            <div class="flex flex-col sm:flex-row gap-4 mt-4">
+              <!-- 
+                Note on the "Toggle" button: A true toggle (start/stop) in pure HTMX would require
+                more complex patterns (like the server returning a new button with different hx-* attributes via OOB swap)
+                or a client-side script. For this lesson, we focus on starting the polling declaratively on the ticker itself.
+                This button remains as a UI element without HTMX attributes.
+              -->
+              <button data-testid="toggle-ticker-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg w-full transition-colors">
+                Toggle News Ticker
+              </button>
+              <!-- This button posts to an endpoint that returns an HX-Trigger header, kicking off an event. -->
+              <button data-testid="send-alert-button" 
+                      class="bg-yellow-600 hover:bg-yellow-700 text-gray-900 font-bold py-2 px-4 rounded-lg w-full transition-colors"
+                      hx-post="/api/broadcast/alert">
+                SEND BREAKING NEWS ALERT
+              </button>
+              <!-- This button posts to an endpoint that returns two fragments: one for the target, one for OOB swap. -->
+              <button data-testid="send-coordinated-update-button" 
+                      class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg w-full transition-colors"
+                      hx-post="/api/broadcast/coordinated-update"
+                      hx-target="#main-screen-content"
+                      hx-swap="innerHTML">
+                Send Coordinated Update
+              </button>
+            </div>
+          </div>
+      </div>
+    </div>
+  </body>
+</html>

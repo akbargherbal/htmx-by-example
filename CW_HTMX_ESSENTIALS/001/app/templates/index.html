@@ -1,0 +1,204 @@
+<!--
+  Principal Frontend Engineer Notes:
+  This is the final, interactive HTML file, wired with HTMX.
+
+  Key Decisions:
+  1.  HTMX Script: The HTMX script is included in the <head> with `defer` to ensure it executes after the DOM is parsed.
+  2.  Dynamic Initial State: The hardcoded "Chef's Status" is replaced with the Jinja2 variable `{{ chef_status }}`. This is critical for rendering the correct initial state passed from the FastAPI backend.
+  3.  Targeting:
+      - Most actions target the `#serving-plate` div, which acts as a central display area.
+      - The PUT request targets its own container (`#soup-container`) to demonstrate a more localized update.
+      - The DELETE request targets its container (`#toast-container`) and uses `hx-swap="outerHTML"` to remove the entire element from the DOM, a common and powerful pattern.
+  4.  Triggers:
+      - Most triggers are the default `click`.
+      - The form uses the default `submit` trigger.
+      - The Chef Status monitor uses `hx-trigger="every 2s"` to demonstrate polling, a core HTMX feature for live updates.
+  5.  Cleanup: The static "State After Action" example from the mockup has been removed, as the `#serving-plate` is now a live, functional element.
+-->
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>
+   Fundamental HTMX Verbs &amp; Concepts
+  </title>
+  <script src="https://cdn.tailwindcss.com/3.4.1">
+  </script>
+  <!-- Include the HTMX library -->
+  <script defer src="https://unpkg.com/htmx.org@1.9.10">
+  </script>
+  <style>
+   .modal { transition: opacity 0.3s ease; } .modal-content { transition: transform 0.3s ease; }
+  </style>
+ </head>
+ <body class="bg-gray-900 text-gray-300 font-sans">
+  <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+   <header class="text-center mb-10 border-b border-gray-700 pb-4">
+    <h1 class="text-4xl font-bold text-gray-100">
+     The Personal Chef &amp; Smart Kitchen
+    </h1>
+    <p class="text-lg text-gray-500 mt-2">
+     Lesson: Fundamental HTMX Verbs &amp; Concepts
+    </p>
+   </header>
+   <div class="text-center mb-10 space-x-4" id="instructional-buttons-container">
+    <button class="bg-gray-700 hover:bg-gray-600 text-indigo-300 font-semibold py-2 px-5 rounded-lg transition-colors" onclick="openModal('scene-modal')">
+     <span class="mr-2">
+      🎭
+     </span>
+     Set the Scene
+    </button>
+    <button class="bg-gray-700 hover:bg-gray-600 text-indigo-300 font-semibold py-2 px-5 rounded-lg transition-colors" onclick="openModal('concepts-modal')">
+     <span class="mr-2">
+      💡
+     </span>
+     The "Why" Behind the "What"
+    </button>
+   </div>
+   <div class="space-y-8 lg:flex lg:space-x-8 lg:space-y-0">
+    <div class="lg:w-1/2 bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg" id="chefs-station">
+     <h2 class="text-2xl font-semibold mb-4 text-indigo-400">
+      Chef's Station (Your Controls)
+     </h2>
+     <div class="space-y-6">
+      <!-- GET: Simple request, swaps response into the serving plate -->
+      <div data-testid="get-water-control">
+       <p class="text-gray-400 mb-2">
+        Ask for a glass of water (demonstrates a
+        <code class="bg-gray-700 px-1 rounded">
+         GET
+        </code>
+        request).
+       </p>
+       <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors" data-testid="get-water-btn" hx-get="/api/kitchen/water" hx-swap="innerHTML" hx-target="#serving-plate">
+        Get me a glass of water
+       </button>
+      </div>
+      <!-- POST: Submits form data, swaps response into the serving plate -->
+      <div data-testid="new-recipe-control">
+       <p class="text-gray-400 mb-2">
+        Give the chef a new recipe (demonstrates a
+        <code class="bg-gray-700 px-1 rounded">
+         POST
+        </code>
+        request).
+       </p>
+       <form class="space-y-3 p-4 bg-gray-700/50 rounded-lg" hx-post="/api/kitchen/recipes" hx-swap="innerHTML" hx-target="#serving-plate">
+        <input class="w-full bg-gray-700 border border-gray-600 text-gray-200 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500" data-testid="recipe-name-input" name="recipeName" placeholder="Recipe Name" type="text">
+        <textarea class="w-full bg-gray-700 border border-gray-600 text-gray-200 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500" data-testid="recipe-instructions-input" name="instructions" placeholder="Recipe Instructions" rows="3"></textarea>
+        <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors" data-testid="submit-recipe-btn" type="submit">
+         Give Recipe to Chef
+        </button>
+       </form>
+      </div>
+      <!-- PUT: Updates a resource, swaps its own container with the response -->
+      <div data-testid="soup-control" hx-swap="innerHTML" hx-target="this" id="soup-container">
+       <p class="text-gray-400 mb-2">
+        Request an update to an existing item (demonstrates a
+        <code class="bg-gray-700 px-1 rounded">
+         PUT
+        </code>
+        request).
+       </p>
+       <div class="bg-gray-700 p-3 rounded-lg flex items-center justify-between">
+        <span data-testid="soup-initial-content">
+         A bowl of plain soup is on the counter.
+        </span>
+        <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors" data-testid="adjust-seasoning-btn" hx-put="/api/kitchen/soup">
+         Adjust Seasoning
+        </button>
+       </div>
+      </div>
+      <!-- DELETE: Removes a resource, swaps its own container with nothing (removing it) -->
+      <div data-testid="toast-control" id="toast-container">
+       <p class="text-gray-400 mb-2">
+        Remove an item from the kitchen (demonstrates a
+        <code class="bg-gray-700 px-1 rounded">
+         DELETE
+        </code>
+        request).
+       </p>
+       <div class="bg-gray-700 p-3 rounded-lg flex items-center justify-between">
+        <span data-testid="toast-initial-content">
+         Some burnt toast is on the counter.
+        </span>
+        <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors" data-testid="discard-toast-btn" hx-delete="/api/kitchen/toast" hx-swap="outerHTML" hx-target="#toast-container">
+         Throw Away Toast
+        </button>
+       </div>
+      </div>
+      <!-- TRIGGER: Polls an endpoint every 2 seconds for updates -->
+      <div data-testid="chef-status-monitor-control">
+       <p class="text-gray-400 mb-2">
+        Automatically get updates from the chef (demonstrates a
+                non-click
+        <code class="bg-gray-700 px-1 rounded">
+         TRIGGER
+        </code>
+        ).
+       </p>
+       <div class="bg-gray-700 p-3 rounded-lg" data-testid="chef-status-monitor" hx-get="/api/kitchen/chef-status" hx-swap="innerHTML" hx-trigger="every 2s">
+        <!-- The initial content is rendered by the server using Jinja2 -->
+        <p>
+         <strong>
+          Chef's Status:
+         </strong>
+         {{ chef_status }}
+        </p>
+       </div>
+      </div>
+     </div>
+    </div>
+    <div class="lg:w-1/2 bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg" id="dining-table">
+     <h2 class="text-2xl font-semibold mb-4 text-indigo-400">
+      Dining Table (Server Response)
+     </h2>
+     <p class="text-gray-500 mb-4">
+      This is where the chef serves the results of your requests. All
+            responses are placed onto the 'Serving Plate' below (the
+      <code class="bg-gray-700 px-1 rounded">
+       TARGET
+      </code>
+      ).
+     </p>
+     <!-- This is the primary target for most HTMX swap operations -->
+     <div class="mt-4 p-6 bg-gray-900 border-2 border-dashed border-gray-600 rounded-lg min-h-[120px] flex items-center justify-center" data-testid="serving-plate" id="serving-plate">
+      <p class="text-gray-500 italic">
+       The serving plate is empty.
+      </p>
+     </div>
+    </div>
+   </div>
+  </div>
+  <!-- Modal Shells -->
+  <div class="hidden modal fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-70" id="scene-modal">
+   <div class="modal-content bg-gray-800 border border-gray-700 rounded-xl shadow-2xl w-full max-w-2xl p-8 z-10 transform scale-95 relative">
+    {% include "set_the_scene.html" %}
+   </div>
+  </div>
+  <div class="hidden modal fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-70" id="concepts-modal">
+   <div class="modal-content bg-gray-800 border border-gray-700 rounded-xl shadow-2xl w-full max-w-3xl p-8 z-10 transform scale-95 relative">
+    {% include "why_behind_what.html" %}
+   </div>
+  </div>
+  <script>
+   function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.style.opacity = '1';
+            modal.querySelector('.modal-content').style.transform = 'scale(1)';
+        }, 10);
+    }
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.style.opacity = '0';
+        modal.querySelector('.modal-content').style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+  </script>
+ </body>
+</html>

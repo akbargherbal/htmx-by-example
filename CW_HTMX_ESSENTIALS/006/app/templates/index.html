@@ -1,0 +1,169 @@
+<!--
+  Principal Frontend Engineer Notes:
+  - HTMX Script: Added the HTMX script from unpkg. The `defer` attribute is important to ensure the DOM is parsed before the script executes.
+  - HTMX Indicator CSS: Added a style block for the default HTMX indicator behavior. An element with the `htmx-indicator` class is hidden by default and becomes visible when HTMX removes the class during a request.
+  - Dynamic Initial State: The entire "Device Status Grid" is now rendered dynamically. The hardcoded "Initial State" and "State After Action" sections from the mockup have been removed.
+  - Jinja2 Templating: The initial state of the device cards is rendered using the `initial_state` dictionary provided by the FastAPI backend. This ensures the UI is always in sync with the backend's state on page load.
+  - HTMX Attributes: Each interactive element has been wired with the necessary `hx-*` attributes, following the "source of truth" backend API.
+    - `hx-vals`: Used on the playlist form to send the input's value as JSON, demonstrating how to pass parameters.
+    - `hx-indicator`: Used on the "Refresh" button to show a loading spinner, providing immediate user feedback.
+    - `hx-target` & `hx-swap`: Precisely define which part of the page to update and how, which is the core of HTMX's power.
+    - `hx-trigger`: A polling trigger (`every 10s`) is used on the temperature card to demonstrate automatic updates without user interaction.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTMX: Smart Home Assistant</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- HTMX script is included here -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+    <style>
+      /*
+        This is the standard CSS for htmx-indicator.
+        An element with this class is hidden by default.
+        HTMX removes this class during the request, making the element visible.
+      */
+      .htmx-indicator {
+        opacity: 0;
+        transition: opacity 200ms ease-in;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-gray-300 font-sans">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The Smart Home Assistant</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: Understanding Triggers, Targets, Values, and Indicators</p>
+      </header>
+
+      <!-- The main layout area for lesson-specific content -->
+      <div class="space-y-8">
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Main Dashboard: Core Concepts</h2>
+          <p class="mb-4 text-gray-400">This lesson uses a Smart Home Assistant analogy to explain key HTMX concepts. Here's how they map:</p>
+          <ul class="space-y-3 list-disc list-inside text-gray-300">
+            <li><strong class="font-semibold text-gray-100">The "Wake Word" (hx-trigger):</strong> Saying 'Hey Assistant' is a trigger. Just like a user click, a timed event (e.g., 'every 10s'), or page load, this is what initiates a request.</li>
+            <li><strong class="font-semibold text-gray-100">The Target Device (hx-target):</strong> Saying '...turn on the kitchen light' targets a specific device. In HTMX, this is the element (identified by a CSS selector like `#kitchen-light`) that receives the new HTML content.</li>
+            <li><strong class="font-semibold text-gray-100">Extra Details (hx-vals):</strong> When you say '...set playlist to 90s Rock', the phrase '90s Rock' is extra data sent with your command. `hx-vals` lets you package this data as JSON with the request.</li>
+            <li><strong class="font-semibold text-gray-100">The "Thinking" Lights (hx-indicator):</strong> The swirling lights on a smart speaker show it's processing. `hx-indicator` shows a loading state (like a spinner) on any element while an HTMX request is in flight.</li>
+          </ul>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Control Panel</h2>
+          <p class="mb-5 text-gray-400">These are the controls for our smart home. Users interact with these elements to send requests to the "server" and update the device statuses below.</p>
+          <div class="space-y-6">
+            <!-- Refresh Status -->
+            <div class="flex items-center space-x-4">
+              <button
+                data-testid="refresh-status-button"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-colors"
+                hx-get="/all-status"
+                hx-target="#device-status-grid"
+                hx-swap="innerHTML"
+                hx-indicator="#status-indicator .animate-spin"
+              >
+                Refresh All Statuses
+              </button>
+              <div id="status-indicator" data-testid="status-indicator">
+                <!-- This spinner has the htmx-indicator class. It is hidden by default and shown by HTMX during the request. -->
+                <svg class="animate-spin h-5 w-5 text-gray-400 htmx-indicator" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+              <span class="text-sm text-gray-500 italic">(Demonstrates `hx-indicator`)</span>
+            </div>
+
+            <!-- Set Playlist -->
+            <form
+              data-testid="playlist-form"
+              class="flex items-center space-x-3"
+              hx-post="/playlist"
+              hx-target="#living-room-speaker"
+              hx-swap="outerHTML"
+              hx-vals='js:{"playlistName": document.querySelector("[data-testid=playlist-input]").value}'
+              hx-on::after-request="this.reset()"
+            >
+              <input type="text" name="playlistName" data-testid="playlist-input" placeholder="Enter playlist name" class="flex-grow bg-gray-700 border border-gray-600 text-gray-200 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-auto" />
+              <button type="submit" data-testid="set-playlist-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-colors">Set Playlist</button>
+              <span class="text-sm text-gray-500 italic">(Demonstrates `hx-vals`)</span>
+            </form>
+
+            <!-- Toggle Light -->
+            <div class="flex items-center space-x-4">
+              <button
+                data-testid="toggle-light-button"
+                class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-colors"
+                hx-post="/toggle-light"
+                hx-target="#kitchen-light"
+                hx-swap="outerHTML"
+              >
+                Toggle Kitchen Light
+              </button>
+              <span class="text-sm text-gray-500 italic">(Demonstrates targeting a single element with `hx-target`)</span>
+            </div>
+
+            <div class="pt-2">
+              <p class="text-sm text-gray-500 italic">Note: The "Ambient Temperature" sensor below updates automatically every 10 seconds, demonstrating a polling `hx-trigger`.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Device Status Grid</h2>
+          <p class="mb-4 text-gray-400">This area displays the current state of all smart devices, rendered on page load from the backend and updated by the controls above.</p>
+
+          <!-- The grid is now a single source of truth, rendered by Jinja2 on load and updated by HTMX. -->
+          <div id="device-status-grid" data-testid="device-status-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <!-- Living Room Speaker Card (Initial) -->
+            <div id="living-room-speaker" data-testid="living-room-speaker-initial" class="bg-gray-900 p-4 rounded-lg flex items-center justify-between ring-2 ring-green-500">
+              <div>
+                <p class="font-bold text-lg">Living Room Speaker</p>
+                <p class="text-gray-400">Playlist: <span class="font-mono text-green-300">{{ initial_state.speaker.playlist }}</span></p>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-12c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" /></svg>
+            </div>
+
+            <!-- Kitchen Light Card (Initial) -->
+            {% if initial_state.light.is_on %}
+            <div id="kitchen-light" data-testid="kitchen-light-initial" class="bg-gray-900 p-4 rounded-lg flex items-center justify-between ring-2 ring-yellow-400">
+              <div>
+                <p class="font-bold text-lg">Kitchen Light</p>
+                <p class="text-gray-400">Status: <span class="font-bold text-green-400">On</span></p>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 14.95a1 1 0 001.414 1.414l.707-.707a1 1 0 00-1.414-1.414l-.707.707zM4 10a1 1 0 01-1 1H2a1 1 0 110-2h1a1 1 0 011 1zM10 18a1 1 0 011-1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.757 4.343a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zM10 5a1 1 0 011-1v-1a1 1 0 10-2 0v1a1 1 0 011-1zM5.05 5.05A1 1 0 006.465 3.636l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM10 16a6 6 0 110-12 6 6 0 010 12z" /></svg>
+            </div>
+            {% else %}
+            <div id="kitchen-light" data-testid="kitchen-light-initial" class="bg-gray-900 p-4 rounded-lg flex items-center justify-between ring-1 ring-gray-600">
+              <div>
+                <p class="font-bold text-lg">Kitchen Light</p>
+                <p class="text-gray-400">Status: <span class="font-bold text-red-400">Off</span></p>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-600" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 14.95a1 1 0 001.414 1.414l.707-.707a1 1 0 00-1.414-1.414l-.707.707zM4 10a1 1 0 01-1 1H2a1 1 0 110-2h1a1 1 0 011 1zM10 18a1 1 0 011-1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.757 4.343a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zM10 5a1 1 0 011-1v-1a1 1 0 10-2 0v1a1 1 0 011-1zM5.05 5.05A1 1 0 006.465 3.636l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM10 16a6 6 0 110-12 6 6 0 010 12z" /></svg>
+            </div>
+            {% endif %}
+
+            <!-- Temperature Sensor Card (Initial) -->
+            <div
+              id="ambient-temperature"
+              data-testid="ambient-temperature-initial"
+              class="bg-gray-900 p-4 rounded-lg flex items-center justify-between ring-2 ring-cyan-500"
+              hx-get="/temperature"
+              hx-trigger="every 10s"
+              hx-swap="outerHTML"
+            >
+              <div>
+                <p class="font-bold text-lg">Ambient Temperature</p>
+                <p class="text-2xl font-mono text-cyan-300">{{ initial_state.temperature.value }}°C</p>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" /></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

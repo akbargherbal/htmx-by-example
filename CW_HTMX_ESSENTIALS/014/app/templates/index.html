@@ -1,0 +1,213 @@
+<!--
+  Principal Frontend Engineer Notes:
+  This file has been converted from a static mockup into a fully interactive
+  Jinja2 template powered by HTMX.
+
+  Key Engineering Decisions:
+  1.  HTMX Script: The core HTMX library is included in the <head> to enable all hx-* attributes.
+  2.  Targeting Strategy: To create a clear "before and after" demonstration, all HTMX actions
+      originating from the "Toolbox" on the left will target the placeholder divs in the
+      "State After Action" column on the right. This preserves the initial state for comparison.
+  3.  Dynamic hx-swap: For the `hx-swap` demo, a small, unobtrusive `onchange` JavaScript snippet
+      is used on the <select> element. It dynamically updates the `hx-swap` attribute on the
+      button. This is a practical and common pattern when the swap behavior itself needs to be
+      configured by the user. The <option> tags have been given explicit `value` attributes.
+  4.  hx-select: The "Fetch Doorknob" button uses `hx-select="#doorknob"` to precisely extract
+      only the desired <span> from the larger HTML fragment returned by the server.
+  5.  hx-include: The "Order Cabinet" button uses `hx-include="#cabinet-order-form"` to grab the
+      value from the width input and send it as part of the POST request, demonstrating how
+      to include data from other elements.
+  6.  Placeholders: The static examples in the "State After Action" column have been replaced
+      with clear placeholders. This makes the effect of the HTMX swaps unambiguous to the user.
+      The original container divs and their `data-testid` attributes are preserved.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Understanding hx-swap, hx-select, and hx-include</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- The HTMX script is essential for all interactivity on this page. -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+  </head>
+  <body class="bg-gray-900 text-gray-300 font-sans">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The Home Renovation</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: Understanding hx-swap, hx-select, and hx-include</p>
+      </header>
+
+      <!-- The main layout area for lesson-specific content -->
+      <div class="space-y-8">
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Contractor's Toolbox</h2>
+          <div class="space-y-6">
+            <!-- Window Installer Form (hx-swap) -->
+            <div data-testid="window-installer-form-container">
+              <h3 class="text-lg font-medium text-gray-200">Window Installer (hx-swap)</h3>
+              <p class="text-sm text-gray-400 mb-3">Select how to install the new item into the window frame.</p>
+              <form id="swap-form" class="space-y-3">
+                <div>
+                  <label for="swap-style-selector" class="block text-sm font-medium text-gray-400">Installation Method (hx-swap):</label>
+                  <!--
+                    This onchange handler updates the button's hx-swap attribute in real-time.
+                    htmx.find() is a safe way to find the button within the form's scope.
+                    The `value` attributes are critical for setting the correct hx-swap behavior.
+                  -->
+                  <select
+                    id="swap-style-selector"
+                    data-testid="swap-style-selector"
+                    class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm text-gray-200"
+                    onchange="htmx.find(this.closest('form'), 'button').setAttribute('hx-swap', this.value)"
+                  >
+                    <option value="innerHTML">innerHTML</option>
+                    <option value="outerHTML">outerHTML</option>
+                    <option value="beforeend">beforeend</option>
+                    <option value="afterbegin">afterbegin</option>
+                    <option value="beforebegin">beforebegin</option>
+                    <option value="afterend">afterend</option>
+                  </select>
+                </div>
+                <!--
+                  This button triggers the GET request.
+                  hx-target points to the placeholder div in the "State After Action" column.
+                  hx-swap is set to "innerHTML" by default and will be changed by the select dropdown.
+                -->
+                <button
+                  type="button"
+                  data-testid="install-item-button"
+                  class="w-full justify-center inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                  hx-get="/renovation/item"
+                  hx-target="#window-frame-after-inner"
+                  hx-swap="innerHTML"
+                >Install Item</button>
+              </form>
+            </div>
+            <!-- Custom Cabinet Order Form (hx-include) -->
+            <div data-testid="cabinet-order-form-container" class="border-t border-gray-700 pt-6">
+              <h3 class="text-lg font-medium text-gray-200">Custom Cabinet Order (hx-include)</h3>
+              <p class="text-sm text-gray-400 mb-3">Provide the wall measurements to include with the cabinet order.</p>
+              <form id="cabinet-order-form" class="space-y-3">
+                <div>
+                  <label for="wall-width" class="block text-sm font-medium text-gray-400">Wall Width (e.g., 120cm):</label>
+                  <input type="text" name="width" id="wall-width" data-testid="wall-width-input" class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm text-gray-200" placeholder="120cm">
+                </div>
+                <!--
+                  This button triggers the POST request.
+                  hx-include tells HTMX to find the form by its ID and include its input values.
+                  hx-target points to the placeholder div in the "State After Action" column.
+                -->
+                <button
+                  type="button"
+                  data-testid="order-cabinet-button"
+                  class="w-full justify-center inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                  hx-post="/order/custom-cabinet"
+                  hx-target="#empty-wall-after"
+                  hx-include="#cabinet-order-form"
+                  hx-swap="innerHTML"
+                >Order Custom Cabinet</button>
+              </form>
+            </div>
+            <!-- Hardware Store Button (hx-select) -->
+            <div data-testid="hardware-store-controls" class="border-t border-gray-700 pt-6">
+              <h3 class="text-lg font-medium text-gray-200">Hardware Store Trip (hx-select)</h3>
+              <p class="text-sm text-gray-400 mb-3">Fetch the entire door assembly but only install the doorknob.</p>
+              <!--
+                This button triggers the GET request.
+                hx-select="#doorknob" instructs HTMX to find the element with id="doorknob" in the
+                server response and use only that part for the swap.
+                hx-target points to the placeholder div in the "State After Action" column.
+              -->
+              <button
+                type="button"
+                data-testid="fetch-doorknob-button"
+                class="w-full justify-center inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                hx-get="/hardware-store/door-assembly"
+                hx-target="#door-after"
+                hx-select="#doorknob"
+                hx-swap="innerHTML"
+              >Go to Hardware Store</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">The Room</h2>
+          <div class="md:grid md:grid-cols-2 md:gap-8">
+            <!-- Initial State Column -->
+            <div>
+              <h3 class="font-semibold text-gray-400 border-b border-gray-600 pb-2 mb-4 text-lg">Initial State</h3>
+              <div data-testid="room-canvas-initial" class="p-4 bg-gray-900 rounded-lg border border-gray-700 space-y-4 h-full">
+                <div data-testid="swap-demo-area-initial">
+                  <h4 class="font-medium text-gray-300">Window Area</h4>
+                  <div id="window-frame-initial" data-testid="window-frame-initial" class="mt-2 p-8 border-2 border-dashed border-gray-600 rounded-md flex items-center justify-center text-gray-500 bg-gray-800/50">An empty frame</div>
+                </div>
+                <div data-testid="select-demo-area-initial">
+                  <h4 class="font-medium text-gray-300">Doorway</h4>
+                  <div id="door-initial" data-testid="door-initial" class="mt-2 p-4 border border-gray-600 rounded-md text-gray-500 bg-gray-800/50">A plain door frame</div>
+                </div>
+                <div data-testid="include-demo-area-initial">
+                  <h4 class="font-medium text-gray-300">Empty Wall Space</h4>
+                  <div id="empty-wall-initial" data-testid="empty-wall-initial" class="mt-2 p-4 border border-gray-600 rounded-md text-gray-500 bg-gray-800/50">Bare wall section</div>
+                </div>
+              </div>
+            </div>
+            <!-- State After Action Column -->
+            <div>
+              <h3 class="font-semibold text-gray-400 border-b border-gray-600 pb-2 mb-4 text-lg">State After Action</h3>
+              <div data-testid="room-canvas-after" class="p-4 bg-gray-900 rounded-lg border border-gray-700 space-y-4 h-full">
+                <!-- hx-swap Demo -->
+                <div data-testid="swap-demo-area-after">
+                  <h4 class="font-medium text-gray-300">Window Area (<code class="text-sm text-pink-400">hx-swap</code>)</h4>
+                  <!-- This div is the target for the hx-swap demo. It starts as a placeholder. -->
+                  <div id="window-frame-after-inner" data-testid="window-frame-after-inner" class="mt-2 p-8 border-2 border-dashed border-gray-600 rounded-md flex items-center justify-center text-gray-500 bg-gray-800/50 min-h-[100px]">
+                    Result will appear here.
+                  </div>
+                </div>
+                <!-- hx-select Demo -->
+                <div data-testid="select-demo-area-after" class="pt-4 mt-4 border-t border-gray-700/50">
+                  <h4 class="font-medium text-gray-300">Doorway (<code class="text-sm text-pink-400">hx-select</code>)</h4>
+                  <!-- This div is the target for the hx-select demo. It starts as a placeholder. -->
+                  <div id="door-after" data-testid="door-after" class="mt-2 p-4 border border-gray-600 rounded-md bg-gray-800/50 flex items-center justify-center text-gray-500 min-h-[60px]">
+                    Result will appear here.
+                  </div>
+                </div>
+                <!-- hx-include Demo -->
+                <div data-testid="include-demo-area-after" class="pt-4 mt-4 border-t border-gray-700/50">
+                  <h4 class="font-medium text-gray-300">Empty Wall Space (<code class="text-sm text-pink-400">hx-include</code>)</h4>
+                  <!-- This div is the target for the hx-include demo. It starts as a placeholder. -->
+                  <div id="empty-wall-after" data-testid="empty-wall-after" class="mt-2 p-4 border border-gray-600 rounded-md bg-gray-800/50 flex items-center justify-center text-gray-500 min-h-[100px]">
+                    Result will appear here.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Hardware Store Delivery</h2>
+          <div data-testid="server-response-container">
+            <h3 class="font-semibold text-gray-400">Full server response for 'Door Assembly' (<code class="text-sm text-pink-400">hx-select</code> source)</h3>
+            <p class="text-sm text-gray-500 mb-3">This is the complete HTML fragment received from the server. The <code class="text-sm text-pink-400">hx-select="#doorknob"</code> attribute tells htmx to only extract and use the highlighted part.</p>
+            <pre class="bg-gray-900 p-4 rounded-md border border-gray-700 overflow-x-auto text-gray-400"><code class="language-html" data-testid="raw-html-response">&lt;!-- This is the full component from /hardware-store/door-assembly --&gt;
+&lt;div class='door-component'&gt;
+  &lt;div class='door-panel wood-grain'&gt;
+    A sturdy oak door panel.
+  &lt;/div&gt;
+  &lt;div class='door-hinges'&gt;
+    Two iron hinges.
+  &lt;/div&gt;
+<span class="bg-indigo-900/50 ring-1 ring-indigo-500 rounded px-1">&lt;span id='doorknob'&gt;A brass doorknob&lt;/span&gt;</span> &lt;!-- hx-select targets this ID --&gt;
+  &lt;div class='kick-plate'&gt;
+    A metal kick plate.
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

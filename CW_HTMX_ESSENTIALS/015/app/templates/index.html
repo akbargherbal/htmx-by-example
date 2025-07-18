@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Submission, Confirmation, and URL Pushing</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+</head>
+<body class="bg-gray-900 text-gray-300 font-sans">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-10 border-b border-gray-700 pb-4">
+            <h1 class="text-4xl font-bold text-gray-100">The Public Library</h1>
+            <p class="text-lg text-gray-500 mt-2">Lesson: Form Submission, Confirmation, and URL Pushing</p>
+        </header>
+
+        <div class="space-y-8">
+            <!-- Section 1: Library Header -->
+            <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Library Header</h2>
+                <div class="text-center">
+                    <h3 class="text-3xl font-bold text-gray-100" data-testid="library-title">The Grand Public Library Archives</h3>
+                </div>
+            </div>
+
+            <!-- Section 2: Archived Book Request -->
+            <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Archived Book Request</h2>
+                <p class="text-gray-400 mb-4">This form allows a user to request a rare book. It illustrates a form submission that triggers a confirmation prompt before sending the request.</p>
+                
+                <form
+                    id="book-request-form"
+                    data-testid="book-request-form"
+                    class="space-y-4"
+                    hx-post="/request-book"
+                    hx-target="#librarian-desk-response"
+                    hx-swap="outerHTML"
+                >
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-400">Book Title</label>
+                        <input type="text" name="title" id="title" placeholder="e.g., The Rare Tome" data-testid="title-input" class="mt-1 block w-full bg-gray-900 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                    </div>
+                    <div>
+                        <label for="author" class="block text-sm font-medium text-gray-400">Author</label>
+                        <input type="text" name="author" id="author" placeholder="e.g., Jane Doe" data-testid="author-input" class="mt-1 block w-full bg-gray-900 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                    </div>
+                    <button type="submit" data-testid="submit-button" class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-gray-900">
+                        Request Archived Book
+                    </button>
+                </form>
+            </div>
+
+            <!-- Section 3: Librarian's Desk -->
+            <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Librarian's Desk</h2>
+                <p class="text-gray-400 mb-4">This area shows the status of the book request. It is the target of the form submission, and its content is replaced upon a successful response.</p>
+
+                {% if book %}
+                <div id="librarian-desk-response" data-testid="librarian-desk-response-final" class="mt-4 p-4 bg-green-900/50 border border-green-700 rounded-md">
+                    <h4 class="font-bold text-lg text-green-400">Request Fulfilled!</h4>
+                    <p class="text-gray-300 mt-2">The book <strong class="text-white">{{ book.title }}</strong> by <strong class="text-white">{{ book.author }}</strong> is now available for you.</p>
+                    <p class="text-xs text-gray-400 mt-3">Note: The browser URL has been updated to <code class="bg-gray-800 text-sm p-1 rounded">/book/{{ book.slug }}</code> for bookmarking.</p>
+                </div>
+                {% else %}
+                <div id="librarian-desk-response" data-testid="librarian-desk-response-initial" class="mt-4 p-4 bg-gray-900 rounded-md ring-1 ring-gray-700">
+                    <p class="text-gray-500 italic">Awaiting your request...</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

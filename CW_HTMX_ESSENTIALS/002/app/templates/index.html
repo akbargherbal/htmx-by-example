@@ -1,0 +1,180 @@
+<!--
+  Principal Frontend Engineer Notes:
+
+  This is the final, interactive HTML file, wired up with HTMX.
+
+  Key Decisions:
+  1.  HTMX/Hyperscript CDNs: Added both HTMX for AJAX and Hyperscript for client-side event handling.
+      Hyperscript is the cleanest, most declarative way to handle the HX-Trigger custom events without
+      writing a separate <script> block, keeping the logic close to the elements that use it.
+  2.  Static "After" State Removed: The static "State After Action" sections from the mockup have been
+      removed. The "Initial State" sections are now the live, interactive areas that will be modified
+      by HTMX.
+  3.  Targeting & Swapping: Each button has specific `hx-get`, `hx-target`, and `hx-swap` attributes
+      that precisely match the API contract and the desired UI behavior (e.g., innerHTML vs. outerHTML).
+  4.  Form Handling: The workshop form uses `hx-post` and `hx-swap="outerHTML"` on the <form> tag itself.
+      This is a common and effective pattern where the form submission replaces the form with a
+      confirmation message. The default behavior of HTMX includes all form inputs, which matches the
+      backend's expectation.
+  5.  Event Handling (HX-Trigger): The "Effects Boards" elements use Hyperscript (`_`) to listen for the
+      custom events (`flashLights`, `playSound`) triggered by the server. This demonstrates a powerful
+      decoupling pattern where one action can trigger multiple, independent reactions on the page.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Swapping, Selecting, and Triggering with htmx</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- HTMX library for core AJAX functionality -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+    <!-- Hyperscript library for clean, declarative event handling (for HX-Trigger) -->
+    <script src="https://unpkg.com/hyperscript.org@0.9.12" defer></script>
+  </head>
+  <body class="bg-gray-900 text-gray-300 font-sans">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The Stage Manager & The Theater Crew</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: Swapping, Selecting, and Triggering with htmx</p>
+      </header>
+
+      <!-- The main layout area for lesson-specific content -->
+      <div class="space-y-8">
+        <!-- Section: The Stage -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">The Stage</h2>
+          <p class="text-gray-400 mb-4">This is the main performance area where props and backdrops are changed by the stage crew.</p>
+
+          <!-- This is the LIVE, interactive stage area -->
+          <div class="mt-4 p-4 bg-gray-900 rounded-lg border border-dashed border-gray-600 min-h-[250px]">
+            <div data-testid="stage-initial" id="stage" class="flex flex-wrap items-start justify-center gap-6 p-4">
+              <!-- This div is the target for the backdrop change -->
+              <div data-testid="backdrop-frame-initial" id="backdrop-frame" class="bg-gray-700 p-2 border-4 border-yellow-800 rounded-md shadow-md">
+                <img src="https://placehold.co/200x150/000000/FFF?text=Quiet+Forest" alt="A quiet forest painting" class="w-full h-full object-cover">
+              </div>
+              <!-- This div is the target for the fireplace replacement -->
+              <div data-testid="fireplace-initial" id="fireplace" class="prop bg-red-900/50 p-4 rounded text-center border border-red-700">
+                <span class="text-2xl">🔥</span>
+                <p class="font-mono text-sm">Cozy Fireplace</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Stage Manager's Control Panel -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Stage Manager's Control Panel</h2>
+          <div class="space-y-6">
+
+            <!-- Group: Set Change Controls (hx-swap) -->
+            <div>
+              <h4 class="text-lg font-medium text-gray-200 mb-2 border-b border-gray-600 pb-1">Set Change Controls (hx-swap)</h4>
+              <div class="flex flex-wrap gap-3">
+                <button data-testid="change-backdrop-btn"
+                        hx-get="/set/backdrop-painting"
+                        hx-target="#backdrop-frame"
+                        hx-swap="innerHTML"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Change Backdrop Painting (innerHTML)</button>
+                <button data-testid="replace-fireplace-btn"
+                        hx-get="/set/fireplace-prop"
+                        hx-target="#fireplace"
+                        hx-swap="outerHTML"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Replace Fireplace Prop (outerHTML)</button>
+                <button data-testid="add-chair-btn"
+                        hx-get="/set/add-chair"
+                        hx-target="#stage"
+                        hx-swap="beforeend"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Add a Chair to the Set (beforeend)</button>
+                <button data-testid="add-coat-rack-btn"
+                        hx-get="/set/add-coat-rack"
+                        hx-target="#stage"
+                        hx-swap="afterend"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Place a Coat Rack (afterend)</button>
+              </div>
+            </div>
+
+            <!-- Group: Prop Request (hx-select) -->
+            <div>
+              <h4 class="text-lg font-medium text-gray-200 mb-2 border-b border-gray-600 pb-1">Prop Request (hx-select)</h4>
+              <div class="flex flex-wrap gap-3">
+                <button data-testid="get-telephone-btn"
+                        hx-get="/props/inventory"
+                        hx-target="#stage"
+                        hx-swap="beforeend"
+                        hx-select="#antique-telephone"
+                        class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Get Antique Telephone from Prop House</button>
+              </div>
+            </div>
+
+            <!-- Group: Workshop Order Form (hx-include) -->
+            <div>
+              <h4 class="text-lg font-medium text-gray-200 mb-2 border-b border-gray-600 pb-1">Workshop Order Form (hx-include)</h4>
+              <!-- The hx-* attributes are on the form itself. The button click triggers the form's POST request. -->
+              <form data-testid="workshop-order-form"
+                    id="workshop-order-form"
+                    hx-post="/workshop/request"
+                    hx-target="#workshop-order-form"
+                    hx-swap="outerHTML"
+                    class="space-y-4 p-4 bg-gray-700/50 rounded-lg">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <label for="stage_width" class="font-medium text-gray-300">Stage Width:</label>
+                  <input type="text" name="stage_width" value="800" data-testid="stage-width-input" class="flex-grow bg-gray-700 border border-gray-600 text-gray-200 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <label for="stage_height" class="font-medium text-gray-300">Stage Height:</label>
+                  <input type="text" name="stage_height" value="600" data-testid="stage-height-input" class="flex-grow bg-gray-700 border border-gray-600 text-gray-200 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <button type="submit" data-testid="request-set-piece-btn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded-lg transition-colors w-full sm:w-auto">Request New Set Piece</button>
+              </form>
+            </div>
+
+            <!-- Group: Cue Director (HX-Trigger) -->
+            <div>
+              <h4 class="text-lg font-medium text-gray-200 mb-2 border-b border-gray-600 pb-1">Cue Director (HX-Trigger)</h4>
+              <div class="flex flex-wrap gap-3">
+                <button data-testid="cue-effects-btn"
+                        hx-get="/cue/special-effects"
+                        class="bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Cue Thunder & Lightning</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Section: Effects Boards -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Effects Boards</h2>
+          <p class="text-gray-400 mb-4">These boards listen for custom events triggered by the server's <code class="bg-gray-900 px-1 rounded">HX-Trigger</code> header.</p>
+
+          <div data-testid="effects-boards-initial" class="mt-4 flex flex-wrap gap-4">
+            <!-- This board listens for the 'flashLights' event using Hyperscript -->
+            <div class="flex-1 bg-gray-900 p-4 rounded-lg text-center transition-all"
+                 _="on flashLights from body
+                      add .border-2, .border-yellow-400, .shadow-lg, .shadow-yellow-400/20
+                    end">
+              <p class="text-lg font-semibold text-gray-500">Lighting Board</p>
+              <div data-testid="lighting-board-status-initial" id="lighting-board-status" class="mt-2 text-2xl font-mono text-gray-600"
+                   _="on flashLights from body
+                        set my innerHTML to '⚡ FLASHING ⚡'
+                        add .text-yellow-400, .animate-pulse
+                      end">-- IDLE --</div>
+            </div>
+            <!-- This board listens for the 'playSound' event using Hyperscript -->
+            <div class="flex-1 bg-gray-900 p-4 rounded-lg text-center transition-all"
+                 _="on playSound from body
+                      add .border-2, .border-blue-400, .shadow-lg, .shadow-blue-400/20
+                    end">
+              <p class="text-lg font-semibold text-gray-500">Sound Board</p>
+              <div data-testid="sound-board-status-initial" id="sound-board-status" class="mt-2 text-2xl font-mono text-gray-600"
+                   _="on playSound from body
+                        set my innerHTML to '🔊 THUNDER 🔊'
+                        add .text-blue-400
+                      end">-- IDLE --</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

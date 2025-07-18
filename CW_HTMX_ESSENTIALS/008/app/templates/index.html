@@ -1,0 +1,128 @@
+<!--
+  Principal Frontend Engineer Notes:
+  This is the final, interactive HTML file, powered by HTMX. It has been wired to the existing backend API.
+
+  Key Decisions:
+  1. HTMX Script: The HTMX script is included in the <head> with `defer` to ensure it executes after the DOM is parsed.
+  2. Dynamic Content via HTMX Attributes: All interactive elements now have `hx-*` attributes. These attributes are configured based on a careful analysis of the `app/main.py` backend file, ensuring the paths, methods, and targets match the API's implementation precisely.
+  3. Target and Swap Strategy:
+     - For full-content replacement (like successful registration or redirects), the target is a large container (`#main-content`) and the swap is `outerHTML` to replace the container itself.
+     - For partial updates (like inline errors), the target is a specific, smaller container (`#registration-error-display`, `#records-display-area`) and the swap is `innerHTML` to place the server-rendered error inside it.
+  4. Error Handling: HTMX natively handles non-2xx responses that return HTML by swapping them into the target, just like a 2xx response. This simplifies the handling for the 409, 403, and 404 errors, as the backend is designed to return user-friendly HTML fragments for these cases.
+  5. Redirects: The "Outstanding Balance" button (`get-grades-redirect-btn`) relies on the backend sending an `HX-Redirect` header. No special `hx-target` is needed on the button itself; HTMX intercepts the header and handles the full-page navigation automatically.
+  6. Cleanup: The static "States After Action" sections from the mockup have been removed. This file now represents only the initial, interactive state of the application, as all subsequent states are fetched from the server.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advanced Navigation and Error Handling</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- Include the HTMX library -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+  </head>
+  <body class="bg-gray-900 text-gray-300 font-sans">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The University Registrar's Office</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: Advanced Navigation and Error Handling</p>
+      </header>
+
+      <!-- 
+        This is the main content area. It serves as the target for full-page swaps.
+        Note the `id="main-content"` which is used by `hx-target`.
+      -->
+      <div id="main-content" data-testid="main-content-initial" class="space-y-8">
+
+        <!-- Course Registration Section -->
+        <div id="course-registration-section" class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Course Registration</h2>
+          <p class="text-gray-400 mb-4">Select a course to register. Different buttons demonstrate success, failure, and in-place error handling.</p>
+          <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-4 sm:space-y-0">
+            <!-- 
+              This button triggers a successful registration.
+              - hx-post: Calls the correct backend endpoint.
+              - hx-target: Targets the entire main content area.
+              - hx-swap="outerHTML": Replaces the entire #main-content div with the response.
+              - hx-push-url="true": Updates the browser's URL bar to reflect the new state.
+            -->
+            <button 
+              data-testid="register-biol-101-btn" 
+              hx-post="/register/success"
+              hx-target="#main-content"
+              hx-swap="outerHTML"
+              hx-push-url="true"
+              class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+              Register for BIOL-101 (Success)
+            </button>
+            <div class="flex items-center space-x-4">
+              <!--
+                This button triggers a registration failure (course is full).
+                - hx-post: Calls the endpoint that returns a 409 Conflict.
+                - hx-target: Targets the specific error display div next to the button.
+                - hx-swap="innerHTML": Places the error message from the server inside the target.
+              -->
+              <button 
+                data-testid="register-hist-350-btn" 
+                hx-post="/register/full"
+                hx-target="#registration-error-display"
+                hx-swap="innerHTML"
+                class="w-full sm:w-auto bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                Register for HIST-350 (Full)
+              </button>
+              <div id="registration-error-display" data-testid="registration-error-target" class="min-h-[2rem]">
+                <!-- Error message for HIST-350 appears here -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Student Records Section -->
+        <div id="student-records-section" class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">View Student Records</h2>
+          <p class="text-gray-400 mb-4">Attempt to access various student records to see how the system handles different permissions, errors, and redirects.</p>
+          <div class="flex flex-wrap gap-4 mb-4">
+            <!--
+              These buttons demonstrate handling specific HTTP error codes (403, 404).
+              - hx-get: Calls the respective error-simulating endpoints.
+              - hx-target: All buttons target the same display area.
+              - hx-swap="innerHTML": The HTML fragment returned by the server for the error will be placed inside the target.
+            -->
+            <button 
+              data-testid="get-grades-forbidden-btn" 
+              hx-get="/records/grades/forbidden"
+              hx-target="#records-display-area"
+              hx-swap="innerHTML"
+              class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+              Get Grades (Permission Denied)
+            </button>
+            <button 
+              data-testid="get-transcript-not-found-btn" 
+              hx-get="/records/transcript/not-found"
+              hx-target="#records-display-area"
+              hx-swap="innerHTML"
+              class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+              Get Transcript (Not Found)
+            </button>
+            <!--
+              This button triggers a server response with an `HX-Redirect` header.
+              HTMX will automatically handle this by navigating to the new URL.
+              No `hx-target` is needed as the redirect takes precedence.
+            -->
+            <button 
+              data-testid="get-grades-redirect-btn" 
+              hx-get="/records/grades/payment-due"
+              class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+              Get Grades (Outstanding Balance)
+            </button>
+          </div>
+          <div id="records-display-area" data-testid="records-result-target" class="bg-gray-900 border border-gray-600 rounded-lg p-4 min-h-[6rem] text-gray-500 italic">
+            Results will be displayed here...
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </body>
+</html>

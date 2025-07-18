@@ -1,0 +1,173 @@
+<!--
+  Principal Frontend Engineer's Notes:
+
+  This is the final, interactive HTML file that will be served to the user.
+  My primary goal is to wire up the static mockup to the backend API using HTMX.
+  I've made the following key decisions:
+
+  1.  **HTMX Script:** The HTMX library is included in the <head> to enable its functionality.
+      I'm using a specific version from a CDN for stability and to avoid self-hosting complexities
+      in this educational context.
+
+  2.  **Single Interactive View:** The original mockup had separate "Initial" and "Final" state
+      visualizations. I have removed the static "Final" state section. The "Initial" state
+      is now the live, interactive canvas that will be modified by the user's actions.
+
+  3.  **Precise Targeting:** Each button's `hx-target` attribute points to a specific element
+      ID (`#car-cockpit-content`, `#wall-section-1`, etc.). This is crucial for ensuring that
+      the HTML fragments returned by the server replace or are inserted into the correct
+      location in the DOM. Using IDs is the most robust method for targeting.
+
+  4.  **Correct Swap Strategies:** The `hx-swap` attribute is carefully chosen for each button
+      to match the desired UI effect, directly corresponding to the lesson's concepts:
+      - `innerHTML`: Replaces the content *inside* an element (the pilot's seat).
+      - `outerHTML`: Replaces the *entire* element (the solid wall with a window wall).
+      - `beforeend`: Inserts the new content just inside the target element, at the end (adding a brick).
+      - `afterend`: Inserts the new content as a sibling *after* the target element (placing the tree).
+      - `beforebegin`: Inserts the new content as a sibling *before* the target element (placing the drawbridge).
+
+  5.  **Leveraging `hx-select`:** The "Get Drawbridge" button is a key example. It calls an
+      endpoint (`/lego/castle-instructions`) that returns a full HTML document. The `hx-select="#drawbridge-piece"`
+      attribute instructs HTMX to find only the element with the ID `drawbridge-piece` within that
+      response and use that for the swap, discarding the rest of the document. This is a powerful
+      feature for integrating with APIs that you don't fully control.
+
+  6.  **No Jinja2 Needed:** After analyzing `app/main.py`, I confirmed that the `read_root`
+      function does not pass any initial LEGO state to the template. The initial scene is
+      static HTML. Therefore, no Jinja2 templating (`{{ ... }}`) is required in this file.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Understanding hx-swap and hx-select</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- Load the HTMX library. The 'defer' attribute is used to ensure it executes after the DOM is parsed. -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+  </head>
+  <body class="bg-gray-900 text-gray-300 font-sans">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The LEGO Builder</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: Understanding hx-swap and hx-select</p>
+      </header>
+
+      <div class="space-y-8">
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Builder's Toolbox</h2>
+          <p class="text-gray-400 mb-6">Use these buttons to modify the LEGO creation below. Each button demonstrates a different htmx swap strategy or concept.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <!-- Button 1: Replaces the content of the car's cockpit. -->
+            <button
+              data-testid="replace-pilot-button"
+              hx-get="/lego/pilot"
+              hx-target="#car-cockpit-content"
+              hx-swap="innerHTML"
+              class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+            >
+              Replace Pilot <span class="block text-xs text-indigo-200">(innerHTML)</span>
+            </button>
+            <!-- Button 2: Replaces the entire solid wall element with a new window wall element. -->
+            <button
+              data-testid="swap-wall-button"
+              hx-get="/lego/window-wall"
+              hx-target="#wall-section-1"
+              hx-swap="outerHTML"
+              class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+            >
+              Swap Wall for Window <span class="block text-xs text-indigo-200">(outerHTML)</span>
+            </button>
+            <!-- Button 3: Appends a brick inside the walls container. -->
+            <button
+              data-testid="add-brick-button"
+              hx-get="/lego/top-brick"
+              hx-target="#house-walls"
+              hx-swap="beforeend"
+              class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+            >
+              Add Brick on Top <span class="block text-xs text-indigo-200">(beforeend)</span>
+            </button>
+            <!-- Button 4: Places a tree element after the main house structure. -->
+            <button
+              data-testid="place-tree-button"
+              hx-get="/lego/tree"
+              hx-target="#lego-house"
+              hx-swap="afterend"
+              class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+            >
+              Place Tree Beside House <span class="block text-xs text-indigo-200">(afterend)</span>
+            </button>
+            <!-- Button 5: Fetches a full document, selects one piece from it, and places it before the house walls. -->
+            <button
+              data-testid="get-drawbridge-button"
+              hx-get="/lego/castle-instructions"
+              hx-target="#house-walls"
+              hx-swap="beforebegin"
+              hx-select="#drawbridge-piece"
+              class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+            >
+              Get Drawbridge Piece <span class="block text-xs text-teal-200">(hx-select)</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">LEGO Building Area</h2>
+          <p class="text-gray-500 text-sm mb-4">This is the interactive build area. Click the buttons above to see it change.</p>
+          <!-- This is the main canvas that will be modified by the HTMX actions. -->
+          <div data-testid="lego-creation-canvas" class="p-4 border-2 border-dashed border-gray-600 rounded-lg min-h-[250px] flex items-end justify-center space-x-4 bg-gray-800/50">
+            <!-- The house structure. It needs an ID to be targeted by the "Place Tree" button. -->
+            <div id="lego-house" data-testid="lego-house" class="flex flex-col items-center">
+              <!-- The container for the walls. It needs an ID to be targeted by "Add Brick" and "Get Drawbridge". -->
+              <div id="house-walls" data-testid="house-walls" class="flex items-end bg-gray-700 p-1 rounded-sm">
+                <!-- The initial wall. It needs an ID to be targeted for the outerHTML swap. -->
+                <div id="wall-section-1" data-testid="wall-section-1-initial" class="w-40 h-20 bg-yellow-500 border-2 border-gray-900 flex items-center justify-center text-black font-semibold rounded-sm">Solid Wall</div>
+              </div>
+            </div>
+            <!-- The car structure. -->
+            <div id="car" data-testid="car" class="flex flex-col items-center">
+              <!-- The cockpit. The inner span needs an ID to be the target for the innerHTML swap. -->
+              <div id="car-cockpit" data-testid="car-cockpit" class="w-24 h-12 bg-gray-400 rounded-t-lg text-sm flex items-center justify-center text-black font-bold border-2 border-gray-900">
+                <span id="car-cockpit-content">Empty</span>
+              </div>
+              <div class="w-32 h-8 bg-blue-600 rounded-b-lg border-2 border-gray-900"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+            <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Server Response Inspector</h2>
+            <p class="text-gray-400 mb-4">This shows the raw, partial HTML fragment the server returns. This fragment is for the <span class="font-mono text-indigo-300">Swap Wall for Window</span> action. Notice it's just the new element, nothing else.</p>
+            <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="language-html text-sm" data-testid="partial-html-response">&lt;!-- Server sends ONLY this fragment for the outerHTML swap --&gt;
+&lt;div id='wall-section-1' 
+     data-testid='wall-section-1-final' 
+     class='w-40 h-20 bg-yellow-500 ...'&gt;
+  Window Wall
+  &lt;div class='absolute w-10 h-10 bg-cyan-300 ...'&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+          </div>
+
+          <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+            <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Full Instruction Manual</h2>
+            <p class="text-gray-400 mb-4">For the <span class="font-mono text-teal-300">Get Drawbridge Piece</span> action, the server returns a large document. `hx-select` tells the browser to find just the <code class="text-teal-300">#drawbridge-piece</code> (highlighted) and ignore the rest.</p>
+            <pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="language-html text-sm" data-testid="full-html-response">&lt;!-- Full server response for /lego/castle-instructions --&gt;
+&lt;html&gt;
+  &lt;body&gt;
+    &lt;h1&gt;Full Castle Parts List&lt;/h1&gt;
+    &lt;div id="castle-parts"&gt;
+      &lt;div id="tower-piece"&gt;... a tall tower ...&lt;/div&gt;
+<span class="bg-teal-900/50 block border-l-4 border-teal-400 pl-2 -ml-3 my-1">      &lt;div id="drawbridge-piece" data-testid="source-drawbridge"&gt;
+        ... a wooden drawbridge ...
+      &lt;/div&gt;</span>
+      &lt;div id="gate-piece"&gt;... a large gate ...&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

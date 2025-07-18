@@ -1,0 +1,159 @@
+<!--
+  Principal Frontend Engineer's Note:
+  This is the final, interactive HTML file. It has been converted from a static mockup into a dynamic Jinja2 template.
+  - All static "example" content has been removed.
+  - The initial state of the inventory and equipped item is now rendered dynamically by the backend via Jinja2 variables (`inventory`, `equipped_item`). This follows the "single source of truth" principle.
+  - HTMX attributes (`hx-*`) have been added to all interactive elements to communicate with the backend API without page reloads.
+  - Targets (`hx-target`) and swap strategies (`hx-swap`) are carefully chosen to update only the necessary parts of the page, making the UI feel fast and responsive.
+  - `data-testid` attributes are dynamically generated using the `item.slug` provided by the backend, ensuring stable and predictable selectors for our E2E tests.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRUD and Selection with HTMX</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- HTMX script is included to power the dynamic interactions. -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+  </head>
+  <body class="bg-gray-900 text-gray-300 font-sans">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The Video Game Inventory</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: CRUD and Selection with HTMX</p>
+      </header>
+
+      <div class="space-y-8">
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-2 text-indigo-400">Lesson Overview</h2>
+          <p class="text-gray-400">
+            This application demonstrates how HTMX can manage a player's inventory. You can craft, equip, and drop items, illustrating the core <code class="bg-gray-700 px-1 rounded-md">GET</code>, <code class="bg-gray-700 px-1 rounded-md">POST</code>, <code class="bg-gray-700 px-1 rounded-md">PUT</code>, and <code class="bg-gray-700 px-1 rounded-md">DELETE</code> actions. The 'Loot' button also shows how <code class="bg-gray-700 px-1 rounded-md">hx-select</code> can pick a specific part of a server response.
+          </p>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Action Panel</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-3">
+              <p class="text-gray-400">Craft a new item to add to your inventory (<code class="bg-gray-700 px-1 rounded-md">hx-post</code>).</p>
+              <!--
+                This form POSTs to /inventory.
+                - hx-target="#inventory-list": The response (the updated list) will replace the element with id="inventory-list".
+                - hx-swap="outerHTML": The entire target element is replaced, not just its content.
+                - hx-on::after-request="this.reset()": A small piece of JavaScript to clear the form after a successful request, improving user experience.
+              -->
+              <form
+                data-testid="craft-form"
+                hx-post="/inventory"
+                hx-target="#inventory-list"
+                hx-swap="outerHTML"
+                hx-on::after-request="this.reset()"
+                class="flex items-center gap-2"
+              >
+                <input type="text" name="itemName" placeholder="e.g., Health Potion" data-testid="craft-input" class="flex-grow bg-gray-700 border border-gray-600 text-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
+                <button type="submit" data-testid="craft-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors whitespace-nowrap">Craft Item</button>
+              </form>
+            </div>
+
+            <div class="space-y-3">
+              <p class="text-gray-400">Open a chest, but only take the sword (<code class="bg-gray-700 px-1 rounded-md">hx-select</code>).</p>
+              <!--
+                This button demonstrates client-side filtering of a server response.
+                - hx-get="/treasure-chest": Fetches the full treasure chest HTML.
+                - hx-select="#looted-sword": From the response, only the element with id="looted-sword" is selected.
+                - hx-target="#inventory-list > ul": The selected element will be targeted to the <ul> inside the #inventory-list div.
+                - hx-swap="beforeend": The selected item is appended to the end of the inventory list.
+              -->
+              <button
+                data-testid="loot-button"
+                hx-get="/treasure-chest"
+                hx-select="#looted-sword"
+                hx-target="#inventory-list > ul"
+                hx-swap="beforeend"
+                class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded transition-colors"
+              >
+                Loot Only Sword from Chest
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Equipped Item Slot</h2>
+          <p class="text-gray-500 mb-4">This area is updated by the 'Equip' buttons in the inventory (demonstrating <code class="bg-gray-700 px-1 rounded-md">hx-put</code>).</p>
+
+          <!--
+            This div is the target for 'Equip' actions. It's initially rendered by the server.
+            The backend returns a new version of this entire div when an item is equipped.
+          -->
+          <div id="equipped-item-slot" data-testid="equipped-item-slot" class="mt-2 p-4 bg-gray-900 rounded-lg">
+            {% if equipped_item %}
+            <p class="text-lg"><strong>Equipped:</strong> <span class="font-mono text-xl text-cyan-300">{{ equipped_item.name }}</span></p>
+            {% else %}
+            <p class="text-lg text-gray-500"><strong>Equipped:</strong> Nothing</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Inventory List</h2>
+          <p class="text-gray-500 mb-4">This list is updated by crafting, dropping, or looting items.</p>
+
+          <!--
+            This div is the main target for inventory updates (crafting, dropping).
+            It contains the <ul> that lists the inventory items.
+          -->
+          <div id="inventory-list" data-testid="inventory-list" class="mt-2">
+            <ul class="space-y-2">
+              <!--
+                This is a Jinja2 loop. On initial page load, the backend provides the `inventory`
+                dictionary, and this loop renders the starting items.
+              -->
+              {% for item_id, item in inventory.items() %}
+              <li
+                class="flex justify-between items-center bg-gray-700 p-3 rounded-md {% if new_item_id == item_id %}ring-2 ring-green-500{% endif %}"
+                data-testid="inventory-item-{{ item.slug }}"
+              >
+                <span class="font-medium text-lg {% if new_item_id == item_id %}text-green-400{% endif %}">{{ item.name }}</span>
+                <div class="flex gap-2">
+                  <!--
+                    Equip Button:
+                    - hx-put: Sends a PUT request to the specific item's equip endpoint.
+                    - hx-target: The response will replace the #equipped-item-slot div.
+                  -->
+                  <button
+                    class="text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-3 rounded transition-colors"
+                    data-testid="equip-button-{{ item.slug }}"
+                    hx-put="/inventory/equip/{{ item_id }}"
+                    hx-target="#equipped-item-slot"
+                    hx-swap="outerHTML"
+                  >
+                    Equip
+                  </button>
+                  <!--
+                    Drop Button:
+                    - hx-delete: Sends a DELETE request to the specific item's endpoint.
+                    - hx-target: The response (the new inventory list) replaces the entire #inventory-list div.
+                    - hx-confirm: A native browser confirmation dialog is shown before sending the request.
+                  -->
+                  <button
+                    class="text-sm bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded transition-colors"
+                    data-testid="drop-button-{{ item.slug }}"
+                    hx-delete="/inventory/item/{{ item_id }}"
+                    hx-target="#inventory-list"
+                    hx-swap="outerHTML"
+                    hx-confirm="Are you sure you want to drop {{ item.name }}?"
+                  >
+                    Drop
+                  </button>
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

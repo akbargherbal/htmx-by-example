@@ -1,0 +1,176 @@
+<!--
+  Principal Frontend Engineer Notes:
+  This is the final, interactive HTML template for our Airport Terminal application.
+  It has been wired up with HTMX attributes to communicate with the existing backend.
+
+  Key Implementation Details:
+  1.  Initial State Rendering: The hardcoded flight data from the mockup has been replaced with a Jinja2 `for` loop.
+      The `read_root` function in `app/main.py` provides the `flights` list in its context, which we use to render the
+      initial state of the departures board. This ensures the UI is always in sync with the backend on page load.
+
+  2.  Real-Time Updates (Polling & Trigger):
+      - The `<tbody>` element (`id="departures-board"`) is the heart of our real-time updates.
+      - `hx-get="/api/flights"`: This tells HTMX to fetch new flight data from this endpoint.
+      - `hx-trigger="every 30s, urgentUpdate from:body"`: This is a multi-trigger. It polls every 30 seconds AND listens for a
+        custom event named `urgentUpdate` dispatched from the body. This custom event is triggered by the `HX-Trigger`
+        response header sent by the `/api/announce-gate-change` endpoint.
+      - `hx-swap="innerHTML"`: Replaces the entire content of the `<tbody>` with the HTML fragment from the server.
+
+  3.  Client-Side Navigation (Boosting):
+      - `hx-boost="true"` is applied to the `<tr>` elements. This "boosts" the standard `<a>` tags within them. When a flight
+        link is clicked, HTMX intercepts the click, makes an AJAX request to the link's `href`, and swaps the response
+        into the specified target, avoiding a full page reload.
+      - `hx-target="#flight-details-content"`: Specifies that the content from the boosted link should replace the
+        contents of the flight details panel.
+
+  4.  Server-Driven Actions (Redirects):
+      - The "Scan Pass" form uses `hx-post` to submit its data. The server can respond with an `HX-Redirect` header,
+        which HTMX will obey, navigating the browser to a new page (`/access-denied`) as directed by the backend.
+
+  5.  Cleanup: The static "State After Action" mockups have been removed as they are now redundant. The single,
+      interactive component now handles all states dynamically.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real-Time Updates & Navigation with HTMX</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- Include the HTMX library -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+  </head>
+  <body class="bg-gray-900 text-gray-300 font-sans">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The Airport Terminal</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: Real-Time Updates & Navigation with HTMX</p>
+      </header>
+
+      <div class="space-y-8">
+        <!-- Section 1: Main Departures Hall -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Main Departures Hall</h2>
+          <p class="text-gray-400 mb-6">This area demonstrates automatic polling, urgent updates, and content boosting.</p>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Departures Board -->
+            <div class="lg:col-span-2">
+              <h3 class="font-semibold text-gray-400">Live Departures Board</h3>
+              <p class="text-sm text-gray-500 mb-2">This board polls for updates every 30 seconds and responds to urgent announcements.</p>
+              <div class="overflow-x-auto rounded-lg border border-gray-700" data-testid="departures-table-initial">
+                <table class="w-full text-left">
+                  <thead class="bg-gray-700/50">
+                    <tr>
+                      <th class="p-3 text-sm font-semibold tracking-wide">Flight</th>
+                      <th class="p-3 text-sm font-semibold tracking-wide">Destination</th>
+                      <th class="p-3 text-sm font-semibold tracking-wide">Gate</th>
+                      <th class="p-3 text-sm font-semibold tracking-wide">Status</th>
+                    </tr>
+                  </thead>
+                  <!--
+                    This tbody is the target for our real-time updates.
+                    - hx-get: Fetches the new rows from the server.
+                    - hx-trigger: Polls every 30s AND listens for the 'urgentUpdate' event.
+                    - hx-swap: Replaces the content of this element with the response.
+                  -->
+                  <tbody
+                    id="departures-board"
+                    data-testid="departures-board-content"
+                    class="divide-y divide-gray-700"
+                    hx-get="/api/flights"
+                    hx-trigger="every 30s, urgentUpdate from:body"
+                    hx-swap="innerHTML"
+                  >
+                    <!--
+                      Initial state is rendered by the server using a Jinja2 loop.
+                      The backend passes the `flights` variable to this template.
+                    -->
+                    {% for flight in flights %}
+                    <tr
+                      class="hover:bg-gray-700/50 cursor-pointer"
+                      hx-boost="true"
+                      hx-target="#flight-details-content"
+                    >
+                      <td class="p-3" data-testid="flight-row-link-{{ flight.id }}-updated"><a href="/flights/{{ flight.id }}">{{ flight.id }}</a></td>
+                      <td class="p-3">{{ flight.destination }}</td>
+                      <td class="p-3 font-bold text-orange-400">{{ flight.gate }}</td>
+                      <td class="p-3"><span class="p-1.5 text-xs font-medium uppercase tracking-wider text-{{ flight.status_color }}-300 bg-{{ flight.status_color }}-800/50 rounded-lg">{{ flight.status }}</span></td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Right Column: Flight Details -->
+            <div class="lg:col-span-1 flex flex-col">
+              <h3 class="font-semibold text-gray-400">Flight Details</h3>
+              <p class="text-sm text-gray-500 mb-2">Click a flight to see details here.</p>
+              <!--
+                This div is the target for our boosted links. Its content will be
+                replaced when a flight is clicked.
+              -->
+              <div
+                id="flight-details-content"
+                data-testid="flight-details-panel"
+                class="bg-gray-900/50 p-4 rounded-lg h-full border border-gray-700 flex items-center justify-center flex-grow"
+              >
+                <p class="text-gray-500 text-center">Click a flight on the departures board to see details here.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Control Panel -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Terminal Control Panel</h2>
+          <p class="text-gray-400 mb-6">This area contains controls to simulate server-sent events and redirects.</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Gate Change Button -->
+            <div>
+              <h3 class="font-semibold text-gray-400">Action: Trigger Urgent Update</h3>
+              <p class="text-sm text-gray-500 mb-3">Simulates a server announcement that forces the departures board to refresh immediately (via HX-Trigger header).</p>
+              <!--
+                This button POSTs to an endpoint that returns an HX-Trigger header.
+                It doesn't swap any content itself; it just triggers the update on the table.
+              -->
+              <button
+                data-testid="urgent-update-button"
+                class="w-full bg-orange-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-orange-500"
+                hx-post="/api/announce-gate-change"
+              >
+                Trigger Urgent Gate Change
+              </button>
+            </div>
+            <!-- Boarding Pass Scanner -->
+            <div>
+              <h3 class="font-semibold text-gray-400">Action: Scan Boarding Pass</h3>
+              <p class="text-sm text-gray-500 mb-3">Simulates scanning a pass. A 'Standard' ticket will cause a server redirect (via HX-Redirect header).</p>
+              <!--
+                This form POSTs to an endpoint that may return an HX-Redirect header,
+                causing a full browser navigation.
+              -->
+              <form
+                data-testid="pass-scanner-form"
+                class="space-y-3"
+                hx-post="/api/scan-pass"
+              >
+                <div>
+                  <label for="ticket-type" class="block text-sm font-medium text-gray-400">Ticket Type</label>
+                  <select id="ticket-type" name="ticket-type" data-testid="ticket-type-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-gray-700 border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <option>Standard</option>
+                    <option>VIP</option>
+                  </select>
+                </div>
+                <button type="submit" data-testid="scan-pass-button" class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500">
+                  Scan Pass
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

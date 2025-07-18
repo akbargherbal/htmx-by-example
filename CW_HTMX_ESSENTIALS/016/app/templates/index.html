@@ -1,0 +1,126 @@
+<!--
+  Principal Frontend Engineer Notes:
+  - This is the final, interactive HTML file, powered by HTMX and rendered by Jinja2.
+  - The static mockup has been converted into a dynamic template.
+  - `hx-boost="true"` on the <nav> is a key feature for progressive enhancement. It automatically converts all child `<a>` links into AJAX requests, targeting the `<body>` by default. We override this with `hx-target` to be more specific.
+  - The initial product list is now rendered server-side using the `products_html` context variable from FastAPI, ensuring the page is fully functional even if JavaScript/HTMX fails to load.
+  - Indicators (`hx-indicator`) provide crucial user feedback during requests, a best practice for good UX.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Progressive Enhancement with hx-boost and Indicators</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <!-- HTMX script is included. `defer` is good practice. -->
+    <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+    <style>
+      /*
+        This CSS is the core of the indicator logic.
+        When an element is making an HTMX request, HTMX adds the `htmx-request` class to it.
+        We use this class to control the visibility of the associated indicator.
+        The `.htmx-indicator` class is a standard HTMX pattern for identifying spinner/loading elements.
+      */
+      .htmx-indicator {
+        opacity: 0;
+        transition: opacity 200ms ease-in;
+      }
+      .htmx-request .htmx-indicator {
+        opacity: 1;
+      }
+      .htmx-request.htmx-indicator {
+        opacity: 1;
+      }
+      /* This class is used to disable the button during a request to prevent double-clicks. */
+      .htmx-request .disable-when-requesting {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-gray-300 font-sans">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <header class="text-center mb-10 border-b border-gray-700 pb-4">
+        <h1 class="text-4xl font-bold text-gray-100">The E-commerce Storefront</h1>
+        <p class="text-lg text-gray-500 mt-2">Lesson: Progressive Enhancement with hx-boost and Indicators</p>
+      </header>
+
+      <div class="space-y-8">
+        <!-- Site Navigation Section -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Site Navigation</h2>
+          <p class="text-gray-400 mb-4">This `nav` element uses `hx-boost` to enhance its child links. Clicks will fetch content via AJAX and swap it into the `#product-content` div below without a full page reload.</p>
+          <!--
+            - hx-boost="true": Enables progressive enhancement for all child `<a>` and `<form>` elements.
+            - hx-target="#product-content": Specifies that the content from boosted links should be placed into this div.
+            - hx-swap="innerHTML": The default swap style, but explicitly stated for clarity. It replaces the content of the target.
+          -->
+          <nav data-testid="site-navigation"
+               class="flex items-center space-x-6"
+               hx-boost="true"
+               hx-target="#product-content"
+               hx-swap="innerHTML">
+            <!-- The hrefs now point to the actual API endpoints. hx-boost will intercept these. -->
+            <a href="/products/t-shirts" class="text-lg text-gray-100 hover:text-indigo-400 transition-colors duration-200" data-testid="nav-t-shirts-link">T-Shirts</a>
+            <a href="/products/hats" class="text-lg text-gray-100 hover:text-indigo-400 transition-colors duration-200" data-testid="nav-hats-link">Hats</a>
+          </nav>
+        </div>
+
+        <!-- Main Content Display Section -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Product Catalog</h2>
+          <p class="text-gray-400">The primary section where content from navigation clicks is swapped in. The initial state (T-Shirts) is rendered on the server.</p>
+
+          <!--
+            This is the target for our navigation links.
+            The initial content is populated by the Jinja2 template variable `products_html`.
+            The `| safe` filter is crucial to prevent Jinja2 from auto-escaping our HTML fragment.
+          -->
+          <div id="product-content" data-testid="product-content-area" class="mt-4 p-4 bg-gray-900/50 rounded-lg min-h-[100px]">
+            {{ products_html | safe }}
+          </div>
+        </div>
+
+        <!-- Checkout Form Section -->
+        <div class="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-indigo-400">Checkout Form</h2>
+          <p class="text-gray-400">This section demonstrates user feedback with `hx-indicator` and the `htmx-request` class.</p>
+
+          <div class="border-t border-gray-600 pt-4 mt-4">
+            <div class="flex items-center space-x-4">
+              <!--
+                - hx-post: Sends a POST request to the checkout endpoint.
+                - hx-target: Specifies where the response HTML fragment should be placed.
+                - hx-indicator: Points to the element to show during the request (the spinner).
+                - The `disable-when-requesting` class is a custom hook for our CSS to apply disabled styles.
+              -->
+              <button data-testid="place-order-button"
+                      class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-500 transition-colors duration-200 disable-when-requesting"
+                      hx-post="/checkout/process"
+                      hx-target="#checkout-status"
+                      hx-indicator="#processing-indicator">
+                Place Order
+              </button>
+              <!--
+                This is the indicator. It has `id="processing-indicator"` to be targeted by the button.
+                It also has the `.htmx-indicator` class, which our CSS uses to make it visible during a request.
+                It starts with `opacity-0` to be hidden by default.
+              -->
+              <div id="processing-indicator" class="htmx-indicator" data-testid="processing-indicator">
+                <svg class="animate-spin h-5 w-5 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+            </div>
+            <!-- This div is the target for the checkout response message. -->
+            <div id="checkout-status" data-testid="checkout-status-area" class="mt-4 text-gray-500 min-h-[24px]">
+              <!-- Status message will appear here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
