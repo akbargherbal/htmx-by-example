@@ -4,7 +4,8 @@
 
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app, reset_state_for_testing # Import the app and reset utility
+from app.main import app, reset_state_for_testing  # Import the app and reset utility
+
 
 # This fixture is a powerful pytest feature. By setting `autouse=True`, it will
 # automatically run before every single test function in this file. This
@@ -14,6 +15,7 @@ def reset_state_before_each_test():
     """Pytest fixture to automatically reset state before each test."""
     reset_state_for_testing()
 
+
 # We instantiate the TestClient once at the module level. This is more efficient
 # than creating a new client for every test. The client simulates making
 # HTTP requests to our running application.
@@ -21,6 +23,7 @@ client = TestClient(app)
 
 
 # --- Test Functions ---
+
 
 def test_get_backdrop_painting_returns_correct_html():
     """
@@ -32,8 +35,11 @@ def test_get_backdrop_painting_returns_correct_html():
 
     # 2. Assert: Verify the response against the API Contract.
     assert response.status_code == 200
-    assert 'src="https://placehold.co/200x150/333333/FFF?text=Stormy+Sea"' in response.text
+    assert (
+        'src="https://placehold.co/200x150/333333/FFF?text=Stormy+Sea"' in response.text
+    )
     assert 'alt="A stormy sea painting"' in response.text
+
 
 def test_get_fireplace_prop_returns_correct_html():
     """
@@ -46,6 +52,7 @@ def test_get_fireplace_prop_returns_correct_html():
     assert "Modern Hearth" in response.text
     assert "💎" in response.text
 
+
 def test_get_add_chair_returns_correct_html():
     """
     Verifies that GET /set/add-chair returns a 200 OK and the
@@ -56,6 +63,7 @@ def test_get_add_chair_returns_correct_html():
     assert 'data-testid="chair-prop"' in response.text
     assert "New Chair" in response.text
     assert "🪑" in response.text
+
 
 def test_get_add_coat_rack_returns_correct_html():
     """
@@ -68,6 +76,7 @@ def test_get_add_coat_rack_returns_correct_html():
     assert "Coat Rack" in response.text
     assert "🧥" in response.text
 
+
 def test_get_props_inventory_returns_full_list_html():
     """
     Verifies that GET /props/inventory returns a 200 OK and the full
@@ -79,6 +88,7 @@ def test_get_props_inventory_returns_full_list_html():
     assert 'id="antique-telephone"' in response.text
     assert 'id="grandfather-clock"' in response.text
     assert "Antique Telephone" in response.text
+
 
 def test_post_workshop_request_returns_confirmation_with_data():
     """
@@ -96,6 +106,7 @@ def test_post_workshop_request_returns_confirmation_with_data():
     assert 'data-testid="workshop-confirmation"' in response.text
     assert "Confirmed: New set piece ordered for stage (800x600)." in response.text
 
+
 def test_get_cue_special_effects_returns_correct_header_and_body():
     """
     Verifies that GET /cue/special-effects returns a 200 OK, the correct
@@ -106,4 +117,6 @@ def test_get_cue_special_effects_returns_correct_header_and_body():
     assert response.text == "<p>Effects cued!</p>"
     # This is the most important assertion for this test.
     assert "HX-Trigger" in response.headers
-    assert response.headers["HX-Trigger"] == "flashLights, playSound"
+    assert (
+        response.headers["HX-Trigger"] == '{"flash-lights": null, "play-sound": null}'
+    )

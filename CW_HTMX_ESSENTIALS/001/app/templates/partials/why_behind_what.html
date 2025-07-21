@@ -1,0 +1,140 @@
+<!-- [FONT-SIZE] Increased modal font sizes -->
+<div class="text-base md:text-lg">
+  <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">
+    The "Why" Behind the "What": HTMX Concepts
+  </h2>
+  <div x-data="{ openAccordion: 1 }" class="space-y-3 text-left">
+    <details class="bg-slate-900/50 p-4 rounded-lg" :open="openAccordion === 1">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 1) ? null : 1"
+        class="font-semibold text-lg lg:text-xl text-teal-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-get`, `hx-post`, `hx-put`, `hx-delete`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 1 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> Traditionally, to communicate with a
+          server, you need to write JavaScript. This involves using `fetch()` or
+          `XMLHttpRequest`, manually setting the HTTP method (GET, POST, etc.),
+          handling headers, serializing form data, and then writing more
+          JavaScript to process the response and update the DOM. This is a lot
+          of boilerplate code for simple interactions.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> HTMX gives HTML superpowers.
+          Instead of writing JavaScript, you use simple, declarative attributes
+          directly in your HTML. `hx-get` makes a GET request, `hx-post` makes a
+          POST request, and so on. This keeps your logic for triggering a server
+          interaction right next to the element that the user interacts with,
+          making the code much easier to read and maintain.
+        </p>
+      </div>
+    </details>
+
+    <details class="bg-slate-900/50 p-4 rounded-lg" :open="openAccordion === 2">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 2) ? null : 2"
+        class="font-semibold text-lg lg:text-xl text-teal-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-target`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 2 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> After a successful JavaScript `fetch()`
+          call, you receive data (like an HTML string). You then have to write
+          imperative JavaScript code, like
+          `document.getElementById('some-id').innerHTML = ...`, to find the
+          correct element on the page and place the response into it. This
+          couples your JavaScript logic tightly to your HTML's structure.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> The `hx-target` attribute lets you
+          declare *where* the response should go, right in your HTML. You can
+          use any CSS selector (like `#serving-plate` or a special value like
+          `this`). This decouples the "what" (the server response) from the
+          "how" (the JavaScript code to place it), making your frontend more
+          modular.
+        </p>
+      </div>
+    </details>
+
+    <details class="bg-slate-900/50 p-4 rounded-lg" :open="openAccordion === 3">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 3) ? null : 3"
+        class="font-semibold text-lg lg:text-xl text-teal-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-swap`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 3 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> When updating the DOM with JavaScript,
+          you need to decide *how* to insert the new content. Should it replace
+          the content inside the element (`innerHTML`)? Should it replace the
+          element itself (`outerHTML`)? Or be added before or after? Each
+          requires a different JavaScript command.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> `hx-swap` provides a powerful and
+          declarative way to control this behavior. In this demo, we see
+          `hx-swap="innerHTML"` to replace the contents of the `#serving-plate`.
+          We also see `hx-swap="outerHTML"` on the "Throw Away Toast" button,
+          which replaces the entire `div` with the (empty) response, effectively
+          deleting it from the page.
+        </p>
+      </div>
+    </details>
+
+    <details class="bg-slate-900/50 p-4 rounded-lg" :open="openAccordion === 4">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 4) ? null : 4"
+        class="font-semibold text-lg lg:text-xl text-teal-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-trigger`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 4 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> By default, user actions like clicks or
+          form submissions trigger requests. What if you want to update
+          something automatically, like polling a server for status updates? In
+          vanilla JS, you'd have to write a `setInterval()` function, manage its
+          state, and embed your `fetch()` logic inside it.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> `hx-trigger` allows you to specify
+          what event should cause the request. While the default is often a
+          `click` or `submit`, you can use many others. The Chef Status monitor
+          uses `hx-trigger="every 2s"` to automatically poll the
+          `/api/kitchen/chef-status` endpoint every two seconds, keeping the
+          status up-to-date without any user interaction or complex JavaScript
+          timers.
+        </p>
+      </div>
+    </details>
+  </div>
+</div>
+<button
+  @click="conceptsModalOpen = false"
+  class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-3xl font-light"
+>
+  ×
+</button>

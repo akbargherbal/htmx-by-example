@@ -1,0 +1,39 @@
+<!-- [FONT-SIZE] Increased modal font sizes -->
+<div class="flex items-start text-base md:text-lg">
+  <div class="mr-6 text-teal-400">
+    <!-- SVG Icon: Chef Hat -->
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="h-16 w-16"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path
+        d="M12 2C8.686 2 6 4.686 6 8c0 1.105.902 2.013 2.031 2.455C7.24 11.31 7 12.25 7 13.5V18c0 .552.448 1 1 1h8c.552 0 1-.448 1-1v-4.5c0-1.25-.24-2.19-.969-3.045C17.098 10.013 18 9.105 18 8c0-3.314-2.686-6-6-6zm0 2c2.206 0 4 1.794 4 4s-1.794 4-4 4-4-1.794-4-4 1.794-4 4-4zm-4 17h8v2H8v-2z"
+      />
+    </svg>
+  </div>
+  <div>
+    <h2 class="text-3xl lg:text-4xl font-bold text-white mb-3">
+      Welcome to the Smart Kitchen & Culinary Workshop!
+    </h2>
+    <p class="text-slate-300 leading-relaxed">
+      In this lesson, you are the customer at a futuristic restaurant. The
+      "Chef's Station" on the left is your control panel for making requests.
+      The "Dining Table" on the right is where the server's responses appear.
+    </p>
+    <p class="mt-3 text-slate-300 leading-relaxed">
+      Your "Personal Chef" (the server) listens to your requests—getting water,
+      adding a recipe, seasoning soup—and delivers the result directly to your
+      table as a small, targeted update. This is the magic of HTMX: making
+      dynamic server interactions feel seamless, without ever reloading the
+      entire page.
+    </p>
+  </div>
+</div>
+<button
+  @click="sceneModalOpen = false"
+  class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-3xl font-light"
+>
+  ×
+</button>

@@ -25,6 +25,7 @@ templates = Jinja2Templates(directory="app/templates")
 # In a real application, this would be replaced by a database.
 APP_STATE = {}
 
+
 def reset_state_for_testing():
     """
     A mandatory utility function to reset the application's state. This is
@@ -34,11 +35,13 @@ def reset_state_for_testing():
     global APP_STATE
     APP_STATE = {}
 
+
 # Initialize the state when the application starts.
 reset_state_for_testing()
 
 
 # --- Application Entrypoint ---
+
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
@@ -50,13 +53,14 @@ async def read_root(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={"initial_state_variable": APP_STATE} # Placeholder for future use
+        context={"initial_state_variable": APP_STATE},  # Placeholder for future use
     )
 
 
 # --- API Endpoints ---
 # These endpoints correspond directly to the API Contract. Each one returns
 # an HTML fragment that HTMX will use to update a part of the page.
+
 
 @app.get("/set/backdrop-painting", response_class=HTMLResponse)
 async def set_backdrop_painting():
@@ -67,6 +71,7 @@ async def set_backdrop_painting():
     return """
     <img src="https://placehold.co/200x150/333333/FFF?text=Stormy+Sea" alt="A stormy sea painting" class="w-full h-full object-cover">
     """
+
 
 @app.get("/set/fireplace-prop", response_class=HTMLResponse)
 async def set_fireplace_prop():
@@ -81,6 +86,7 @@ async def set_fireplace_prop():
     </div>
     """
 
+
 @app.get("/set/add-chair", response_class=HTMLResponse)
 async def add_chair():
     """
@@ -94,6 +100,7 @@ async def add_chair():
     </div>
     """
 
+
 @app.get("/set/add-coat-rack", response_class=HTMLResponse)
 async def add_coat_rack():
     """
@@ -106,6 +113,7 @@ async def add_coat_rack():
       <p class="font-mono text-sm">Coat Rack</p>
     </div>
     """
+
 
 @app.get("/props/inventory", response_class=HTMLResponse)
 async def get_props_inventory():
@@ -131,10 +139,10 @@ async def get_props_inventory():
     </div>
     """
 
+
 @app.post("/workshop/request", response_class=HTMLResponse)
 async def request_workshop_item(
-    stage_width: Annotated[int, Form()],
-    stage_height: Annotated[int, Form()]
+    stage_width: Annotated[int, Form()], stage_height: Annotated[int, Form()]
 ):
     """
     Handles a POST request from a form. It reads the 'stage_width' and
@@ -148,13 +156,17 @@ async def request_workshop_item(
     </div>
     """
 
+
 @app.get("/cue/special-effects", response_class=HTMLResponse)
-async def cue_special_effects(response: Response):
+async def cue_special_effects():
     """
     Returns a simple confirmation message but, more importantly, sets a custom
     'HX-Trigger' header. This header tells HTMX to trigger client-side events
-    (in this case, 'flashLights' and 'playSound').
+    (in this case, 'flash-lights' and 'play-sound').
     """
-    # We must interact with the Response object directly to set custom headers.
-    response.headers["HX-Trigger"] = "flashLights, playSound"
-    return "<p>Effects cued!</p>"
+    # We must construct an HTMLResponse object directly to ensure our custom
+    # headers are correctly attached to the final response.
+    # Using the JSON object format and kebab-case for event names for max compatibility.
+    content = "<p>Effects cued!</p>"
+    headers = {"HX-Trigger": '{"flash-lights": null, "play-sound": null}'}
+    return HTMLResponse(content=content, headers=headers)

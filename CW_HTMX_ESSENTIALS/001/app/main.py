@@ -24,6 +24,7 @@ templates = Jinja2Templates(directory="app/templates")
 CHEF_STATUS_INITIAL = "Ready and waiting..."
 chef_status = CHEF_STATUS_INITIAL
 
+
 def reset_state_for_testing():
     """
     Resets the application's in-memory state to its initial condition.
@@ -33,7 +34,9 @@ def reset_state_for_testing():
     global chef_status
     chef_status = CHEF_STATUS_INITIAL
 
+
 # --- Application Entrypoint (Serves the main HTML page) ---
+
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
@@ -46,12 +49,12 @@ async def read_root(request: Request):
     # The context dictionary passes server-side data to the Jinja2 template.
     # Here, we pass the initial chef_status so the page loads with the correct data.
     return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={"chef_status": chef_status}
+        request=request, name="index.html", context={"chef_status": chef_status}
     )
 
+
 # --- API Endpoints (Implement the API Contract) ---
+
 
 @app.get("/api/kitchen/water", response_class=HTMLResponse)
 async def get_water():
@@ -60,10 +63,11 @@ async def get_water():
     This is a simple, idempotent GET endpoint that always returns the same
     static HTML fragment, as defined in the API contract.
     """
+    # [RE-SKIN] Updated HTML fragment to match the new slate/teal theme and font sizes.
     html_content = """
-<div class="text-center bg-gray-800 p-4 rounded-lg">
+<div class="text-center bg-slate-700/50 p-4 rounded-lg text-base md:text-lg">
   <p class="text-3xl">💧</p>
-  <p class="text-gray-300 font-medium">Here is your glass of water.</p>
+  <p class="text-slate-300 font-medium">Here is your glass of water.</p>
 </div>
 """
     return HTMLResponse(content=html_content)
@@ -77,13 +81,11 @@ async def add_recipe(recipeName: str = Form(...)):
     The `Form(...)` dependency tells FastAPI to extract the 'recipeName' field
     from the request body. The response dynamically includes this name.
     """
-    # We use an f-string to dynamically insert the user-provided recipe name
-    # into the response HTML. This shows how the backend can process input
-    # and return a customized partial HTML update.
+    # [RE-SKIN] Updated HTML fragment to match the new slate/teal theme and font sizes.
     html_content = f"""
-<div class="text-center bg-gray-800 p-4 rounded-lg">
+<div class="text-center bg-slate-700/50 p-4 rounded-lg text-base md:text-lg">
   <p class="text-3xl">📖</p>
-  <p class="text-gray-300 font-medium">Recipe for "{recipeName}" added to the cookbook!</p>
+  <p class="text-slate-300 font-medium">Recipe for "{recipeName}" added to the cookbook!</p>
 </div>
 """
     return HTMLResponse(content=html_content)
@@ -96,10 +98,11 @@ async def adjust_soup_seasoning():
     PUT is the correct HTTP verb here as we are modifying/updating the state
     of a resource (the soup). In this demo, it simply returns a confirmation.
     """
+    # [RE-SKIN] Updated HTML fragment to match the new slate/teal theme and font sizes.
     html_content = """
-<div class="text-center bg-gray-800 p-4 rounded-lg">
+<div class="text-center bg-slate-700 p-4 rounded-lg text-base md:text-lg">
   <p class="text-3xl">🍲</p>
-  <p class="text-gray-300 font-medium">The soup has been perfectly seasoned.</p>
+  <p class="text-slate-300 font-medium">The soup has been perfectly seasoned.</p>
 </div>
 """
     return HTMLResponse(content=html_content)

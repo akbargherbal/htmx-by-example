@@ -18,10 +18,11 @@
 #     ensures we are testing the full, integrated system correctly.
 
 from playwright.sync_api import Page, expect
-import re # Import regex module for class assertions
+import re  # Import regex module for class assertions
 
 # The `live_server` fixture is automatically provided by conftest.py
 # The `page` fixture is automatically provided by pytest-playwright.
+
 
 def test_e2e_set_changes_update_the_stage(page: Page, live_server):
     """
@@ -48,6 +49,7 @@ def test_e2e_set_changes_update_the_stage(page: Page, live_server):
     expect(page.get_by_test_id("fireplace-after")).to_contain_text("Modern Hearth")
 
     # 4. Act & Assert: Add Chair (beforeend)
+    # We click the button that adds a chair directly first to ensure it works.
     page.get_by_test_id("add-chair-btn").click()
     # The new chair prop should appear inside the #stage div.
     expect(page.get_by_test_id("chair-prop")).to_be_visible()
@@ -103,37 +105,35 @@ def test_e2e_form_submission_replaces_form_with_confirmation(page: Page, live_se
     # The confirmation message should be visible and contain the correct data.
     confirmation_message = page.get_by_test_id("workshop-confirmation")
     expect(confirmation_message).to_be_visible()
-    expect(confirmation_message).to_contain_text("Confirmed: New set piece ordered for stage (800x600).")
+    expect(confirmation_message).to_contain_text(
+        "Confirmed: New set piece ordered for stage (800x600)."
+    )
 
 
 def test_e2e_hx_trigger_updates_effects_boards(page: Page, live_server):
     """
     Verifies that a server response with an HX-Trigger header correctly
-    fires client-side events, which are handled by Hyperscript to update the UI.
+    fires client-side events that are handled by AlpineJS.
     """
     # 1. Arrange
     page.goto("http://127.0.0.1:8000")
-    lighting_status = page.get_by_test_id("lighting-board-status-initial")
-    sound_status = page.get_by_test_id("sound-board-status-initial")
-    lighting_board = lighting_status.locator("..") # The parent div with the border
-    sound_board = sound_status.locator("..")
+    lighting_board_status = page.get_by_test_id("lighting-board-status-initial")
+    sound_board_status = page.get_by_test_id("sound-board-status-initial")
 
-    # Check initial state
-    expect(lighting_status).to_have_text("-- IDLE --")
-    expect(sound_status).to_have_text("-- IDLE --")
-    expect(lighting_board).not_to_have_class(re.compile("border-yellow-400"))
-    expect(sound_board).not_to_have_class(re.compile("border-blue-400"))
+    # Assert initial state
+    expect(lighting_board_status).to_contain_text("-- IDLE --")
+    expect(lighting_board_status).to_have_class(re.compile(r"text-gray-600"))
+    expect(sound_board_status).to_contain_text("-- IDLE --")
+    expect(sound_board_status).to_have_class(re.compile(r"text-gray-600"))
 
     # 2. Act
     page.get_by_test_id("cue-effects-btn").click()
 
-    # 3. Assert: Verify the UI has updated based on the custom events.
-    # Check lighting board
-    expect(lighting_status).to_have_text("⚡ FLASHING ⚡")
-    expect(lighting_status).to_have_class(re.compile("text-yellow-400"))
-    expect(lighting_board).to_have_class(re.compile("border-yellow-400"))
-
-    # Check sound board
-    expect(sound_status).to_have_text("🔊 THUNDER 🔊")
-    expect(sound_status).to_have_class(re.compile("text-blue-400"))
-    expect(sound_board).to_have_class(re.compile("border-blue-400"))
+    # 3. Assert: Verify the UI has updated based on the custom event.
+    # The AlpineJS component should have heard the events and updated the text and classes.
+    expect(lighting_board_status).to_contain_text("⚡ FLASHING ⚡")
+    expect(lighting_board_status).to_have_class(
+        re.compile(r"text-yellow-400 animate-pulse")
+    )
+    expect(sound_board_status).to_contain_text("🔊 THUNDER 🔊")
+    expect(sound_board_status).to_have_class(re.compile(r"text-blue-400"))
