@@ -1,0 +1,77 @@
+<!-- Content generated/inserted by enhance_courseware.py -->
+<div class="text-base md:text-lg">
+  <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">
+    The "Why" Behind the "What": HTMX Concepts
+  </h2>
+  <div x-data="{ openAccordion: 1 }" class="space-y-3 text-left">
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 1">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 1) ? null : 1"
+        class="font-semibold text-lg lg:text-xl text-indigo-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-trigger` for Polling & Events?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 1 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> Creating a "live" UI that updates automatically is complex. You need JavaScript's `setInterval` for polling and `addEventListener` for custom events. To get an immediate update from the server (like our "Urgent Gate Change"), you'd typically need a heavy solution like WebSockets.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> The `hx-trigger` attribute simplifies this immensely. We use `hx-trigger="every 30s, urgentUpdate from:body"` to both poll regularly and listen for a custom event. The server triggers this event by sending back a simple `HX-Trigger` response header, telling the departures board to refresh instantly without complex client-side logic or a persistent connection.
+        </p>
+      </div>
+    </details>
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 2">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 2) ? null : 2"
+        class="font-semibold text-lg lg:text-xl text-indigo-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-boost` for Navigation?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 2 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> You want the fast, fluid feel of a Single-Page App (SPA) where clicking a link only updates a small part of the page. However, you also want to use standard `&lt;a href="..."&gt;` tags for accessibility and search engine friendliness. Achieving both usually requires a large JavaScript framework.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> `hx-boost="true"` provides the best of both worlds. It intercepts clicks on standard links, fetches the content via AJAX in the background, and swaps it into a target (`#flight-details-content`). This gives a fast, SPA-like experience while maintaining clean, semantic HTML that works even if JavaScript fails.
+        </p>
+      </div>
+    </details>
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 3">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 3) ? null : 3"
+        class="font-semibold text-lg lg:text-xl text-indigo-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use Server-Driven Actions (`HX-Redirect`)?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 3 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> After a form submission, the client-side JavaScript often needs to decide where to navigate the user. It gets a success/error response and then has to programmatically change `window.location.href`, putting navigational logic on the frontend.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> HTMX lets the server take control. When our "Scan Pass" form is submitted, the backend can respond with an `HX-Redirect` header containing a URL. HTMX sees this header and automatically navigates the browser to the specified page. This keeps the navigational logic on the server, where it often belongs, leading to a simpler and more robust frontend.
+        </p>
+      </div>
+    </details>
+  </div>
+</div>
+<button
+  @click="conceptsModalOpen = false"
+  class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-3xl font-light"
+>
+  ×
+</button>

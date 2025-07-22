@@ -1,0 +1,31 @@
+<!-- Content generated/inserted by enhance_courseware.py -->
+<div class="flex items-start">
+  <div class="mr-6 text-indigo-400">
+    <!-- SVG Icon: Receipt/Order -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+  </div>
+  <div>
+    <h2 class="text-3xl lg:text-4xl font-bold text-white mb-3">
+      Welcome to the Modern Drive-Thru Kiosk!
+    </h2>
+    <div class="text-slate-300 space-y-4 text-lg">
+      <p>
+        Imagine you're at a futuristic drive-thru. Instead of shouting into a crackly speaker, you interact with a sleek digital kiosk. You tap in your order—a cheeseburger, fries, and a soda.
+      </p>
+      <p>
+        In a traditional web application, adding an item would be like driving your car around the entire restaurant block just to see your order update on the screen—a full page reload. It's slow and clunky.
+      </p>
+      <p>
+        This course demonstrates the HTMX approach. When you add an item, you're not reloading the whole kiosk screen. Instead, your kiosk (the browser) sends a quick, quiet message to the kitchen (the server). The kitchen sends back just the updated order slip (an HTML fragment), which instantly appears on your summary screen. This is the core of modern, efficient web interaction.
+      </p>
+    </div>
+  </div>
+</div>
+<button
+  @click="sceneModalOpen = false"
+  class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-3xl font-light"
+>
+  ×
+</button>

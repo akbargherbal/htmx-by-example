@@ -1,0 +1,77 @@
+<!-- Content generated/inserted by enhance_courseware.py -->
+<div class="text-base md:text-lg">
+  <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">
+    The "Why" Behind the "What": HTMX Core Concepts
+  </h2>
+  <div x-data="{ openAccordion: 1 }" class="space-y-3 text-left">
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 1">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 1) ? null : 1"
+        class="font-semibold text-lg lg:text-xl text-teal-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-swap`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 1 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> To update a part of a page, you typically fetch data with JavaScript, then write more JavaScript to create HTML elements and manually insert them into the DOM using methods like `.innerHTML` or `.appendChild()`. This requires custom, often repetitive, client-side scripting for each interaction.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> `hx-swap` lets you declare *how* the server's HTML response should be placed into the page, right in your HTML. An attribute like `hx-swap="beforeend"` tells HTMX to append the new content inside the target, eliminating the need for custom JavaScript to handle the DOM update.
+        </p>
+      </div>
+    </details>
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 2">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 2) ? null : 2"
+        class="font-semibold text-lg lg:text-xl text-teal-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-select`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 2 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> An API endpoint might return a large, complete HTML component, but you only need one small piece of it for your update. Without HTMX, you'd fetch the entire block, parse it in JavaScript, find the specific element you need, and then insert it. This is inefficient and adds client-side complexity.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> `hx-select` acts as a client-side filter. You provide a CSS selector (e.g., `hx-select="#doorknob"`), and HTMX automatically extracts only that matching element from the server's response before performing the swap. This keeps your backend simple (it can return full components) while your frontend updates are precise and efficient.
+        </p>
+      </div>
+    </details>
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 3">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 3) ? null : 3"
+        class="font-semibold text-lg lg:text-xl text-teal-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-include`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 3 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> Sending form data to a server usually requires JavaScript to handle the submit event, gather values from various input fields, and construct an AJAX request (like `fetch`). This is boilerplate code that must be written for nearly every form on a site.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> `hx-include` lets you declaratively include values from other elements in a request. By pointing to a form with `hx-include="#cabinet-order-form"`, HTMX automatically collects all its input data and sends it with the request. This completely removes the need for custom JavaScript to handle form submissions.
+        </p>
+      </div>
+    </details>
+  </div>
+</div>
+<button
+  @click="conceptsModalOpen = false"
+  class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-3xl font-light"
+>
+  ×
+</button>

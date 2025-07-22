@@ -1,0 +1,79 @@
+<!-- Content generated/inserted by enhance_courseware.py -->
+<div class="text-base md:text-lg">
+  <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">
+    The "Why" Behind the "What": Advanced HTMX Concepts
+  </h2>
+  <div x-data="{ openAccordion: 1 }" class="space-y-3 text-left">
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 1">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 1) ? null : 1"
+        class="font-semibold text-lg lg:text-xl text-indigo-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-trigger="every 2s"` (Polling)?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 1 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> You need to display constantly changing data, like the news ticker in our app. Traditionally, this requires writing JavaScript with `setInterval()` to repeatedly make an API call, parse the response, and manually update the correct part of the DOM. This is boilerplate code that mixes client-side logic with presentation.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> The `#news-ticker-content` div uses `hx-trigger="every 2s"`. This single attribute tells HTMX to automatically send a GET request to the URL in `hx-get` every two seconds and swap the response into the div. HTMX manages the timer, the request, and the DOM update, all declaratively in your HTML.
+        </p>
+      </div>
+    </details>
+
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 2">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 2) ? null : 2"
+        class="font-semibold text-lg lg:text-xl text-yellow-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use the `HX-Trigger` Header?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 2 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> An action in one part of the page needs to cause an update in a completely different, unrelated part. For example, our "SEND ALERT" button needs to make the "Main Screen" fetch new content. Tightly coupling these elements in JavaScript can lead to complex and brittle code (e.g., `button.onClick = () => { fetch(...); document.getElementById(...).innerHTML = ...; }`).
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> We decouple the components. The button at `/api/broadcast/alert` returns no HTML, only a response header: `HX-Trigger: newBreakingNews`. The `#main-screen-content` div listens for this specific event with `hx-trigger="newBreakingNews from:body"`. When it "hears" the event, it triggers its own `hx-get` request. This creates a powerful, event-driven system directly in HTML.
+        </p>
+      </div>
+    </details>
+
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 3">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 3) ? null : 3"
+        class="font-semibold text-lg lg:text-xl text-red-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use Out-of-Band (OOB) Swaps?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 3 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> A single action needs to update multiple, independent areas of the page simultaneously. The "Coordinated Update" button needs to update both the "Main Screen" and the "Alerts Sidebar". Making two separate requests is inefficient. Returning a giant block of HTML for the entire page is wasteful.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> The `/api/broadcast/coordinated-update` endpoint returns a single response containing two fragments. The first updates the target (`#main-screen-content`) as usual. The second fragment, for the sidebar, is marked with `hx-swap-oob="true"` and includes the target's ID (`id="alerts-sidebar-list"`). HTMX intelligently finds this "out-of-band" content and swaps it into the correct element, allowing for efficient, multi-point updates with one server roundtrip.
+        </p>
+      </div>
+    </details>
+  </div>
+</div>
+<button
+  @click="conceptsModalOpen = false"
+  class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-3xl font-light"
+>
+  ×
+</button>

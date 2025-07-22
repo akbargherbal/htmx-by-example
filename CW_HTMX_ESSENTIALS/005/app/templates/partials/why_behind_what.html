@@ -1,0 +1,77 @@
+<!-- Content generated/inserted by enhance_courseware.py -->
+<div class="text-base md:text-lg">
+  <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">
+    The "Why" Behind the "What": HTMX Core Concepts
+  </h2>
+  <div x-data="{ openAccordion: 1 }" class="space-y-3 text-left">
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 1">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 1) ? null : 1"
+        class="font-semibold text-lg lg:text-xl text-teal-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-swap`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 1 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> To update a small piece of a webpage, you traditionally need to write JavaScript. This involves fetching data, parsing it, creating new HTML elements in code, and manually inserting them into the correct place in the DOM. For different effects like replacing an element versus adding to it, you need different logic.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> The `hx-swap` attribute lets you declaratively control how new content is placed. You can replace an element entirely (`outerHTML`), just its contents (`innerHTML`), or place the new content adjacent to it (`beforeend`, `afterend`, etc.). This turns complex DOM manipulation into a single, readable HTML attribute.
+        </p>
+      </div>
+    </details>
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 2">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 2) ? null : 2"
+        class="font-semibold text-lg lg:text-xl text-teal-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-select`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 2 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> Sometimes an API or another webpage returns a full HTML document when you only need one small part of it. In JavaScript, you'd have to fetch the entire document, parse the text into a DOM structure, and then use a selector to find and extract the piece you need, which is inefficient.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> `hx-select` does the work for you. You provide a CSS selector (like `#drawbridge-piece`), and HTMX will automatically fetch the response, find the matching element within it, and use *only that element* for the swap. It's a powerful way to consume content from sources you don't control without client-side parsing logic.
+        </p>
+      </div>
+    </details>
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 3">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 3) ? null : 3"
+        class="font-semibold text-lg lg:text-xl text-teal-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why return Partial HTML Fragments?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 3 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> Many modern web apps use APIs that return raw data (JSON). The browser's JavaScript is then responsible for turning that data into HTML. This means you have rendering logic on the server (for the first page load) and you must duplicate it in JavaScript, leading to more complex code.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> HTMX promotes sending HTML directly from the server—the "HTML over the wire" approach. The server sends a ready-to-use "LEGO brick" (a partial HTML fragment), and the browser simply snaps it into place. This keeps all your rendering logic in one place (the backend), simplifies your frontend, and reduces the amount of JavaScript you need to write and maintain.
+        </p>
+      </div>
+    </details>
+  </div>
+</div>
+<button
+  @click="conceptsModalOpen = false"
+  class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-3xl font-light"
+>
+  ×
+</button>

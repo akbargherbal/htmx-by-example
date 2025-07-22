@@ -1,0 +1,35 @@
+<!-- Content generated/inserted by enhance_courseware.py -->
+<div class="flex items-start">
+  <div class="mr-6 text-indigo-400">
+    <!-- SVG Icon: Broadcast Tower -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
+      <path d="M12 12v3"></path>
+      <path d="M18.5 13.5a6.5 6.5 0 1 0-13 0"></path>
+      <path d="M22 13.5a10 10 0 1 0-20 0"></path>
+      <path d="M12 22v-3"></path>
+    </svg>
+  </div>
+  <div>
+    <h2 class="text-3xl lg:text-4xl font-bold text-white mb-3">
+      Welcome to the Dynamic News Broadcast Studio Interface!
+    </h2>
+    <div class="text-slate-300 space-y-3">
+      <p>
+        Imagine you're the director in a live news broadcast control room. Your screen is filled with monitors, each displaying critical information: the main "on-air" story, a scrolling news ticker, and a sidebar of incoming alerts from your team.
+      </p>
+      <p>
+        In this lesson, your webpage is that control room. We'll explore how HTMX can manage this complex, real-time environment. You'll see how to automatically refresh the news ticker (Polling), how one action can trigger updates across the studio (Server-Sent Events), and how a single command from the server can update multiple screens at once (Out-of-Band Swaps).
+      </p>
+      <p>
+        Get ready to take control and see how simple, declarative attributes can orchestrate a dynamic, responsive user experience, just like a professional broadcast.
+      </p>
+    </div>
+  </div>
+</div>
+<button
+  @click="sceneModalOpen = false"
+  class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-3xl font-light"
+>
+  ×
+</button>

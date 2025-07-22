@@ -1,0 +1,28 @@
+<!-- Content generated/inserted by enhance_courseware.py -->
+<div class="flex items-start">
+  <div class="mr-6 text-teal-400">
+    <!-- SVG Icon: Smart Home Hub -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+    </svg>
+  </div>
+  <div>
+    <h2 class="text-3xl lg:text-4xl font-bold text-white mb-3">
+      Welcome to the Modern Smart Home Hub!
+    </h2>
+    <div class="text-slate-300 space-y-3">
+      <p>
+        Imagine you're the lead engineer designing the interface for a new smart home assistant. Your goal is to create a control panel that feels instantaneous and modern. When a user taps a button to toggle a light, they expect to see the status change immediately, without the entire page flashing and reloading.
+      </p>
+      <p>
+        In this lesson, HTMX is the "nervous system" of our smart home. It connects the user's actions on the control panel directly to the "brain" (our backend server). The server thinks for a moment, decides what changed (e.g., the light is now "On"), and sends back just the tiny piece of updated HTML needed. HTMX then seamlessly swaps it into the page. This creates a fast, fluid experience, just like a real smart device.
+      </p>
+    </div>
+  </div>
+</div>
+<button
+  @click="sceneModalOpen = false"
+  class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-3xl font-light"
+>
+  ×
+</button>

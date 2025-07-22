@@ -1,0 +1,98 @@
+<!-- Content generated/inserted by enhance_courseware.py -->
+<div class="text-base md:text-lg">
+  <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">
+    The "Why" Behind the "What": HTMX Core Concepts
+  </h2>
+  <div x-data="{ openAccordion: 1 }" class="space-y-3 text-left">
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 1">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 1) ? null : 1"
+        class="font-semibold text-lg lg:text-xl text-indigo-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-post`, `hx-put`, `hx-delete`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 1 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> To create, update, or delete data (like crafting or dropping an item), you typically need to write JavaScript. This involves capturing a form submit or button click, using `fetch()` with the correct HTTP method (POST, PUT, DELETE), and then manually updating the webpage with the server's response. This is repetitive and adds complexity.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> HTMX provides attributes that map directly to HTTP verbs. You can add `hx-post` to a form to create data or `hx-delete` to a button to remove data. HTMX handles the background AJAX request for you. The server responds with HTML, and HTMX swaps it in, all without a single line of custom JavaScript.
+        </p>
+      </div>
+    </details>
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 2">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 2) ? null : 2"
+        class="font-semibold text-lg lg:text-xl text-indigo-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-target` and `hx-swap`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 2 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> After a server request, you need to update the correct part of the page. In JavaScript, this means writing code like `document.getElementById('inventory-list').innerHTML = newHtml;`. This couples your logic tightly to your HTML structure and can become messy if multiple areas need updating.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> These attributes let you control DOM updates directly from your HTML. `hx-target="#some-id"` tells HTMX *where* to put the response. `hx-swap="outerHTML"` tells it *how* to put it there (e.g., replace the entire element, its inner content, or append to it). This makes your code declarative and much easier to understand.
+        </p>
+      </div>
+    </details>
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 3">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 3) ? null : 3"
+        class="font-semibold text-lg lg:text-xl text-indigo-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-select`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 3 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> Sometimes a server sends back a larger chunk of HTML than you need. For instance, an endpoint might return a whole treasure chest of items, but your UI only needs to add one specific item (the sword) to your inventory. You would have to fetch the whole response, parse it, find the sword, and then inject it.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> `hx-select` filters the server's response *before* it gets swapped into the DOM. By adding `hx-select="#looted-sword"`, you tell HTMX to fetch the full `/treasure-chest` HTML but only grab the element with the ID `looted-sword` from that response to use in the update. This keeps your backend simple and your frontend interactions precise.
+        </p>
+      </div>
+    </details>
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 4">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 4) ? null : 4"
+        class="font-semibold text-lg lg:text-xl text-indigo-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-confirm`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 4 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> For a destructive action like dropping an item, it's crucial to ask the user for confirmation. This usually requires adding a JavaScript event listener that calls `window.confirm()` and only proceeds if the user clicks "OK".
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> `hx-confirm` provides this common feature with a single attribute. Adding `hx-confirm="Are you sure...?"` to the "Drop" button makes HTMX automatically show a confirmation dialog before sending the `DELETE` request. It's a simple, declarative way to build safer user interfaces.
+        </p>
+      </div>
+    </details>
+  </div>
+</div>
+<button
+  @click="conceptsModalOpen = false"
+  class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-3xl font-light"
+>
+  ×
+</button>

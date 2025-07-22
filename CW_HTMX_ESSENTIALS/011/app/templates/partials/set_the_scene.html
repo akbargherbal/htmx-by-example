@@ -1,0 +1,26 @@
+<!-- Content generated/inserted by enhance_courseware.py -->
+<div class="flex items-start">
+  <div class="mr-6 text-indigo-400">
+    <!-- SVG Icon: Backpack -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-16 h-16"><path d="M4 10a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10Z"></path><path d="M10 2a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h0a2 2 0 0 1-2-2V2Z"></path><path d="M8 2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2"></path><path d="M16 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2"></path></svg>
+  </div>
+  <div>
+    <h2 class="text-3xl lg:text-4xl font-bold text-white mb-3">
+      Welcome to the Pixelated RPG Inventory!
+    </h2>
+    <div class="text-slate-300 space-y-3">
+      <p>
+        In this lesson, we're not just writing code; we're managing a hero's backpack in a classic video game. Think of this web page as your character's inventory screen. Every button you press is an action you take in the game world.
+      </p>
+      <p>
+        When you "Craft" an item, you're sending a request to the game's server to create something new. When you "Equip" a sword, you're telling the server to update your character's status. Dropping an item removes it permanently. HTMX is the magic that lets you perform these actions without ever having to reload the entire game screen, making the experience fast and seamless—just like a real game.
+      </p>
+    </div>
+  </div>
+</div>
+<button
+  @click="sceneModalOpen = false"
+  class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-3xl font-light"
+>
+  ×
+</button>

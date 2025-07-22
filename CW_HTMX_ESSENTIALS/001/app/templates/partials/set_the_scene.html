@@ -1,34 +1,36 @@
-<!-- [FONT-SIZE] Increased modal font sizes -->
-<div class="flex items-start text-base md:text-lg">
+<!-- Content generated/inserted by enhance_courseware.py -->
+<div class="flex items-start">
   <div class="mr-6 text-teal-400">
-    <!-- SVG Icon: Chef Hat -->
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="h-16 w-16"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-    >
-      <path
-        d="M12 2C8.686 2 6 4.686 6 8c0 1.105.902 2.013 2.031 2.455C7.24 11.31 7 12.25 7 13.5V18c0 .552.448 1 1 1h8c.552 0 1-.448 1-1v-4.5c0-1.25-.24-2.19-.969-3.045C17.098 10.013 18 9.105 18 8c0-3.314-2.686-6-6-6zm0 2c2.206 0 4 1.794 4 4s-1.794 4-4 4-4-1.794-4-4 1.794-4 4-4zm-4 17h8v2H8v-2z"
-      />
+    <!-- SVG Icon relevant to the theme -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2c-3.333 2.667-5 5.333-5 8s1.667 5.333 5 8c3.333-2.667 5-5.333 5-8s-1.667-5.333-5-8z" fill="currentColor" fill-opacity="0.2"></path>
+      <path d="M12 2a8.97 8.97 0 0 0-4.05 1.15"></path>
+      <path d="M12 2a8.97 8.97 0 0 1 4.05 1.15"></path>
+      <path d="M7 10a5.001 5.001 0 0 0 5 8c2.76 0 5-3.582 5-8"></path>
+      <path d="M12 22c-3.333-2.667-5-5.333-5-8"></path>
+      <path d="M12 22c3.333-2.667 5-5.333 5-8"></path>
+      <path d="M19 10h.01"></path>
+      <path d="M5 10h.01"></path>
+      <path d="M12 2v2"></path>
+      <path d="M12 20v2"></path>
+      <path d="M12 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"></path>
     </svg>
   </div>
   <div>
     <h2 class="text-3xl lg:text-4xl font-bold text-white mb-3">
       Welcome to the Smart Kitchen & Culinary Workshop!
     </h2>
-    <p class="text-slate-300 leading-relaxed">
-      In this lesson, you are the customer at a futuristic restaurant. The
-      "Chef's Station" on the left is your control panel for making requests.
-      The "Dining Table" on the right is where the server's responses appear.
-    </p>
-    <p class="mt-3 text-slate-300 leading-relaxed">
-      Your "Personal Chef" (the server) listens to your requests—getting water,
-      adding a recipe, seasoning soup—and delivers the result directly to your
-      table as a small, targeted update. This is the magic of HTMX: making
-      dynamic server interactions feel seamless, without ever reloading the
-      entire page.
-    </p>
+    <div class="text-slate-300 space-y-3 text-base md:text-lg">
+      <p>
+        In this lesson, we'll explore HTMX using a simple analogy: you're a diner interacting with a personal chef.
+      </p>
+      <p>
+        The <strong>Chef's Station</strong> on the left is your control panel. Here, you make requests—asking for water, submitting a new recipe, or asking the chef to adjust the soup. Each action you take corresponds to a specific HTTP request verb (GET, POST, PUT, DELETE).
+      </p>
+      <p>
+        The <strong>Dining Table</strong> on the right is where the chef (our server) delivers the results of your requests. Notice how your actions on the left cause new items to appear on the "Serving Plate". This entire interaction happens without writing a single line of complex JavaScript, thanks to the power of HTMX.
+      </p>
+    </div>
   </div>
 </div>
 <button

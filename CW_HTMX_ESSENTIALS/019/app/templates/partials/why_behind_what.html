@@ -1,0 +1,77 @@
+<!-- Content generated/inserted by enhance_courseware.py -->
+<div class="text-base md:text-lg">
+  <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">
+    The "Why" Behind the "What": HTMX Core Concepts
+  </h2>
+  <div x-data="{ openAccordion: 1 }" class="space-y-3 text-left">
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 1">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 1) ? null : 1"
+        class="font-semibold text-lg lg:text-xl text-indigo-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-post` with `hx-swap="outerHTML"`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 1 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> To enable the song selection grid after a "coin insert," you'd typically write JavaScript to send a POST request. Then, you would need to write complex DOM manipulation code to find the disabled grid, remove it, and then programmatically create and insert a whole new set of enabled buttons, each with its own event listeners.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> The "Insert Coin" button uses <code>hx-post="/enable-jukebox"</code> to trigger a state change on the server. The magic is in <code>hx-target="#song-grid"</code> and <code>hx-swap="outerHTML"</code>. This tells HTMX to replace the <em>entire</em> <code>#song-grid</code> element with the HTML fragment returned by the server. The server sends back a fully-formed, interactive component, eliminating all manual DOM manipulation from the client-side code.
+        </p>
+      </div>
+    </details>
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 2">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 2) ? null : 2"
+        class="font-semibold text-lg lg:text-xl text-indigo-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-get` to update a display?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 2 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> Showing a song preview usually involves attaching a click listener to each "Preview" button. This listener would make a `fetch` GET request, parse a JSON response, and then manually find the display element and update its `innerHTML` with the song's details.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> The "Preview" button simplifies this to a single line of attributes. <code>hx-get="/songs/preview?..."</code> makes the request, and <code>hx-target="#main-display"</code> tells HTMX exactly where to put the resulting HTML fragment. The server responds with simple HTML, and HTMX handles the content swap. It's a declarative and highly readable way to fetch and display data.
+        </p>
+      </div>
+    </details>
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 3">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 3) ? null : 3"
+        class="font-semibold text-lg lg:text-xl text-indigo-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-swap="beforeend"` to build a list?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 3 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> Adding an item to a dynamic list, like our song queue, requires a POST request. On success, your JavaScript would have to create a new `&lt;li&gt;` element, set its content, and then append it to the `&lt;ol&gt;`. This mixes data submission with manual DOM element creation.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> The "Select" button (returned from the first POST) uses <code>hx-post="/songs/queue"</code> and <code>hx-vals</code> to add a song. The key is <code>hx-swap="beforeend"</code> combined with <code>hx-target="#song-queue-list"</code>. This instructs HTMX to take the HTML fragment from the server's response (which is a single, complete <code>&lt;li&gt;...&lt;/li&gt;</code>) and simply append it as the last child inside the target list. This is extremely efficient for growing lists.
+        </p>
+      </div>
+    </details>
+  </div>
+</div>
+<button
+  @click="conceptsModalOpen = false"
+  class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-3xl font-light"
+>
+  ×
+</button>

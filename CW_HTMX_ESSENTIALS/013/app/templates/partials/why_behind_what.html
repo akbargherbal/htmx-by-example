@@ -1,0 +1,77 @@
+<!-- Content generated/inserted by enhance_courseware.py -->
+<div class="text-base md:text-lg">
+  <h2 class="text-3xl lg:text-4xl font-bold text-white mb-6">
+    The "Why" Behind the "What": HTMX Core Concepts
+  </h2>
+  <div x-data="{ openAccordion: 1 }" class="space-y-3 text-left">
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 1">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 1) ? null : 1"
+        class="font-semibold text-lg lg:text-xl text-indigo-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-get`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 1 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> To fetch simple content (like our "Soup of the Day") and display it without a full page reload, you'd traditionally need to write JavaScript. This involves using the `fetch()` API, handling Promises, waiting for the response, and then manually finding the target element in the DOM to update its `innerHTML`. This is a multi-step, boilerplate-heavy process.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> HTMX boils this entire process down to a single HTML attribute. `hx-get="/menu-item?name=soup"` tells the browser: "When this button is clicked, send a GET request to this URL." The server responds with an HTML snippet, and HTMX automatically handles the rest, placing the content exactly where you tell it to with `hx-target`.
+        </p>
+      </div>
+    </details>
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 2">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 2) ? null : 2"
+        class="font-semibold text-lg lg:text-xl text-indigo-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-post` on a form?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 2 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> Handling form submissions asynchronously is even more complex. You must write JavaScript to prevent the form's default full-page submission, manually collect data from all inputs (including tricky cases like multiple checkboxes), package it for the request body, make a `fetch()` call with the `POST` method, and then process the response to update the UI.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> Adding `hx-post="/custom-order"` to a `<form>` tag is a game-changer. HTMX automatically intercepts the submission, serializes all the form's data (including the `toppings` checkboxes and `special_requests` input), and sends it in the request body. It completely eliminates the need for custom form-handling JavaScript.
+        </p>
+      </div>
+    </details>
+    <details class="bg-slate-900 p-4 rounded-lg" :open="openAccordion === 3">
+      <summary
+        @click.prevent="openAccordion = (openAccordion === 3) ? null : 3"
+        class="font-semibold text-lg lg:text-xl text-indigo-400 cursor-pointer list-none flex justify-between items-center"
+      >
+        <span>Why use `hx-target`?</span>
+        <span
+          class="text-slate-500 text-sm transform transition-transform"
+          :class="{ 'rotate-180': openAccordion === 3 }"
+          >▼</span
+        >
+      </summary>
+      <div class="mt-3 text-slate-300 space-y-2">
+        <p>
+          <strong>The Problem:</strong> In a typical JavaScript application, the logic that triggers an action (e.g., a button's `onclick` listener) is often separate from the logic that updates the UI. You have to write code to explicitly select the destination element, like `document.getElementById('plate-display-area')`, making the data flow harder to trace.
+        </p>
+        <p>
+          <strong>The HTMX Solution:</strong> `hx-target="#plate-display-area"` makes the data flow declarative and obvious. It co-locates the "what to do" (`hx-get`) with the "where to put it" (`hx-target`). By simply reading the HTML of the button or form, you know exactly which part of the page will be updated, making the code much easier to read, understand, and maintain.
+        </p>
+      </div>
+    </details>
+  </div>
+</div>
+<button
+  @click="conceptsModalOpen = false"
+  class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-3xl font-light"
+>
+  ×
+</button>

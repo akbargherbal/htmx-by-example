@@ -1,0 +1,28 @@
+<!-- Content generated/inserted by enhance_courseware.py -->
+<div class="flex items-start">
+  <div class="mr-6 text-indigo-400">
+    <!-- SVG Icon: Airplane -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M21.43,11.23l-9-7a1,1,0,0,0-1.09.21L3.62,11.16a1,1,0,0,0-.23,1.34l1.3,2.17,4.3-3.32.85,3.83-2.27,1.71a1,1,0,0,0-.43,1.34l.85,1.42a1,1,0,0,0,1.34.43l3.21-1.93,3.21,1.93a1,1,0,0,0,1.34-.43l.85-1.42a1,1,0,0,0-.43-1.34L14.1,15.21l.85-3.83,4.3,3.32,1.3-2.17A1,1,0,0,0,21.43,11.23Z"/>
+    </svg>
+  </div>
+  <div>
+    <h2 class="text-3xl lg:text-4xl font-bold text-white mb-3">
+      Welcome to the Modern Airport Terminal!
+    </h2>
+    <div class="text-slate-300 space-y-3">
+      <p>
+        In this lesson, our web application is an airport terminal. The central feature, the <strong>Live Departures Board</strong>, is our primary data display. Like a real airport board, it needs to show the latest information without requiring you to constantly ask an agent (i.e., reload the page).
+      </p>
+      <p>
+        We'll see how the board updates automatically at regular intervals (polling), and how an urgent "Gate Change" announcement can trigger an immediate, out-of-band refresh. We'll also explore how clicking a flight to view its details provides a seamless update, much like using a terminal kiosk, without navigating away from the main hall. Finally, we'll see how scanning a boarding pass can result in the server redirecting you to a completely different area.
+      </p>
+    </div>
+  </div>
+</div>
+<button
+  @click="sceneModalOpen = false"
+  class="absolute top-4 right-4 text-slate-500 hover:text-slate-300 text-3xl font-light"
+>
+  ×
+</button>
